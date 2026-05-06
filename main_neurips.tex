@@ -7,37 +7,52 @@
 \usepackage{neurips_2026}
 
 %                      
-% Standard packages
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage{hyperref}
-\usepackage{url}
-\usepackage{booktabs}
+\documentclass{article}
+\usepackage{neurips_2026}
+
+% Math
 \usepackage{amsfonts}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsthm}
+
+% Encoding & fonts
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
 \usepackage{nicefrac}
 \usepackage{microtype}
-\usepackage{xcolor}
 
-% Paper-specific packages
-\usepackage{graphicx}
-\usepackage{algorithm}
-\usepackage{algorithmic}
-\usepackage{algpseudocode}
+% Links & URLs
+\usepackage{hyperref}
+\usepackage{url}
+
+% Tables
+\usepackage{booktabs}
 \usepackage{multirow}
-\usepackage{caption}
+\usepackage[table]{xcolor}
+
+% Figures & layout
+\usepackage{graphicx}
+\usepackage{wrapfig}
 \usepackage{float}
+
+% Captions - load ONCE with options
+\usepackage[font=footnotesize,labelfont=bf]{caption}
+
+% Algorithms - load algpseudocode ONLY, never algorithmic
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% Boxes
+\usepackage{tcolorbox}
+\usepackage{colortbl}
+
 %                      
 % Theorem environments (LLNCS provides these by default; NeurIPS does not)
 \newtheorem{theorem}{Theorem}
 \newtheorem{proposition}[theorem]{Proposition}
 \newtheorem{lemma}[theorem]{Lemma}
-\usepackage{booktabs}
-\usepackage{multirow}
-\usepackage[table]{xcolor}
-\usepackage{caption}
+
 %                      
 % Convenience macros (replace eccvabbrv functionality)
 \newcommand{\etal}{\textit{et~al.}}
@@ -76,13 +91,12 @@ and \textbf{Long-Tailed Visual Recognition (LT-VR)} on highly skewed disease
 populations. We formally show that the gradient-alignment objective favored by
 DG conflicts with the class-aware optimization required for LT-VR, producing a
 smoothness--sharpness trade-off that degrades both. To resolve this, we
-introduce the \textbf{Agentic Causal Disentanglement (ACD)} framework, a
-modular architecture that integrates explicit clinical knowledge sourced
+introduce the \textbf{Retrieve–Reason–Run Agent (R3A)} framework. This modular architecture integrates explicit clinical knowledge sourced
 autonomously from sonographers, radiologists, and specialists as a causal
-intervention. ACD orchestrates three agents (Clinical Reasoning, Causal
+intervention. R3A orchestrates three agents (Clinical knowledge retrieval, Reasoning on Causal
 Disentanglement, Code Generation) and routes predictions through a
 class-conditional cascade rather than concatenating features. Across
-\textbf{10 medical-imaging datasets spanning 4 modalities}, ACD yields an
+\textbf{10 medical-imaging datasets spanning 4 modalities}, R3A yields an
 average \textbf{10.3\% improvement} over DG and LT baselines on
 multi-domain and in-domain long-tailed tasks.
 \end{abstract}
@@ -96,7 +110,7 @@ categorical distribution $P(Y)$ and the class-conditional distribution
 $P(X|Y)$. In medical image analysis these shifts are particularly severe:
 multi-center MRI or retinal datasets exhibit large domain gaps from differences
 in scanner hardware, acquisition parameters, and patient
-demographics~\cite{Lei22, Chen23, Li23a}. Such variations distort $P(X|Y)$ and
+demographics~\cite{Lei22, Chen23}. Such variations distort $P(X|Y)$ and
 degrade reliability in unseen clinical environments.
 
 Two intertwined challenges dominate this generalization failure:
@@ -109,7 +123,8 @@ often critical (tail) pathologies are sparsely represented~\cite{CXR24}.
 Models trained on such data overfit head classes and catastrophically
 misclassify tail diseases.
 
-Although DG and LT-VR have been extensively studied in isolation, they coexist in real-world medical settings. Existing DG methods typically report improvements in macro-level accuracy and cross-domain performance; however, they often fail to preserve performance on rare classes under domain shift, as demonstrated in Table\ref{tab:perclass_f1}. For example, in Diabetic Retinopathy grading, which involves five classes where the fourth class (Proliferative DR) is rare, training a ViT-based SOTA ERM model on the APTOS dataset and evaluating on a different domain such as MESSIDOR leads to a drop in overall accuracy. While introducing a DG-enhanced ViT variant improves in-domain and cross-domain macro performance, the accuracy on the rare class degrades in both settings, despite using the same underlying architecture. Such behavior is unacceptable in high-stakes applications such as autonomous driving, clinical diagnosis, and drone perception, where improvements must be consistent across both frequent and rare classes. (The detailed experimental setup is provided in the appendix 
+Although DG and LT-VR have been extensively studied in isolation, they coexist in real-world medical settings. Existing DG methods typically report improvements in macro-level accuracy and cross-domain performance; however, they often fail to preserve performance on rare classes under domain shift, as demonstrated in Table\ref{tab:perclass_f1}. For example, in Diabetic Retinopathy grading, which involves five classes where the fourth class (Proliferative DR) is rare, training a ViT-based SOTA ERM model on the APTOS dataset and evaluating on a different domain, such as MESSIDOR leads to a drop in overall accuracy. While introducing a DG-enhanced ViT variant \cite{Galappaththige2024} improves in-domain and cross-domain macro performance, the accuracy on the rare class degrades in both settings, despite using the same underlying architecture. Such behavior is unacceptable in high-stakes applications such as autonomous driving, clinical diagnosis, and drone perception, where improvements must be consistent across both frequent and rare classes. (The detailed experimental setup is provided in the appendix 
+
 \ref{table1}.)
 \begin{wraptable}{r}{0.575\textwidth}
 \centering
@@ -129,64 +144,6 @@ Although DG and LT-VR have been extensively studied in isolation, they coexist i
 
 \label{tab:perclass_f1}
 
-% \resizebox{\linewidth}{!}{%
-% \begin{tabular}{l cc ccc}
-% \toprule
-% \multirow{2}{*}{\textbf{Class}}
-%   & \multicolumn{2}{c}{%
-%     \textbf{APTOS (in-domain)}}
-%   & \multicolumn{3}{c}{%
-%     \textbf{Messidor (cross-domain)}} \\
-% \cmidrule(lr){2-3}
-% \cmidrule(lr){4-6}
-%   & ERM\_ViT
-%   & ERM\_SPSD
-%   & ERM\_ViT
-%   & ERM\_SPSD
-%   & \textbf{Ours} \\
-% \midrule
-% G0 Normal
-%   & $93.9 \pm 0.4$
-%   & $\mathbf{95.0 \pm 0.3}$
-%   & $21.6 \pm 0.8$
-%   & $28.5 \pm 0.6$
-%   & $\mathbf{76.5 \pm 0.5}$ \\
-% G1 Mild
-%   & $47.9 \pm 1.1$
-%   & $\mathbf{54.8 \pm 0.9}$
-%   & $0.0 \pm 0.0$
-%   & $0.0 \pm 0.0$
-%   & $\mathbf{4.8 \pm 0.4}$ \\
-% G2 Moderate
-%   & $67.6 \pm 0.7$
-%   & $\mathbf{70.2 \pm 0.5}$
-%   & $24.7 \pm 0.9$
-%   & $30.3 \pm 0.7$
-%   & $\mathbf{29.1 \pm 0.6}$ \\
-% G3 Severe
-%   & $16.0 \pm 1.2$
-%   & $\mathbf{20.0 \pm 1.0}$
-%   & $1.3 \pm 0.5$
-%   & $5.9 \pm 0.8$
-%   & $\mathbf{29.3 \pm 0.7}$ \\
-% \rowcolor{red!20}
-% \textbf{G4 PDR}
-%   & $\mathbf{11.8 \pm 1.3}$
-%   & $6.6 \pm 1.1$
-%   & $8.6 \pm 1.1$
-%   & $3.3 \pm 0.9$
-%   & $\mathbf{18.5 \pm 0.8}$ \\
-% \midrule
-% \rowcolor{red!20}
-% \textbf{macro-F1}
-%   & $47.4 \pm 0.6$
-%   & $\mathbf{49.3 \pm 0.5}$
-%   & $11.2 \pm 0.4$
-%   & $13.6 \pm 0.3$
-%   & $\mathbf{31.6 \pm 0.4}$ \\
-% \bottomrule
-% \end{tabular}%
-% }
 \resizebox{\linewidth}{!}{%
 \begin{tabular}{l cc ccc}
 \toprule
@@ -197,10 +154,10 @@ Although DG and LT-VR have been extensively studied in isolation, they coexist i
     \textbf{Messidor (cross-domain)}} \\
 \cmidrule(lr){2-3}
 \cmidrule(lr){4-6}
-  & ViT (ERM)$^\dagger$
-  & SPSD-ViT$^\dagger$
-  & ViT (ERM)$^\dagger$
-  & SPSD-ViT$^\dagger$
+  & ERM\_ViT
+  & ERM\_SPSD
+  & ERM\_ViT
+  & ERM\_SPSD
   & \textbf{Ours} \\
 \midrule
 G0 Normal
@@ -243,15 +200,9 @@ G3 Severe
   & $13.6 \pm 0.3$
   & $\mathbf{31.6 \pm 0.4}$ \\
 \bottomrule
-\multicolumn{6}{l}{%
-  \scriptsize $^\dagger$Both baselines use
-  identical ViT (DeiT-S) backbone;
-  gains are attributable to}\\
-\multicolumn{6}{l}{%
-  \scriptsize the integration strategy,
-  not architecture capacity.}\\
 \end{tabular}%
 }
+
 \vspace{-0.15in}
 \end{wraptable}
 Recent work on \textbf{Multi-Domain Long-Tailed (MDLT) Recognition}~\cite{Yang22} attempts to jointly address DG and LT-VR; however, it assumes that long-tailed distributions exist in some domains but not others, allowing the model to implicitly learn tail classes across multiple domains. This assumption does not hold in real-world scenarios, where rare classes remain consistently rare across all domains. For instance, proliferative diabetic retinopathy and pancreatic cancer remain rare irrespective of the dataset or clinical setting. Within DG-LT, a fundamental optimization
@@ -295,17 +246,17 @@ banerjee2023automated, kamboj2024expert, kamboj2024expertTAI}.
 
 
 \textbf{Contributions.} We formalize and prove that class-conditional
-knowledge integration (CCKI) has a higher likelihood of achieving better
-performance than concatenation in MDLT using knowledge-based expert machines.
-Building on this theory we propose the \textbf{Agentic Causal Disentanglement
-(ACD)} framework, which builds knowledge-guided deep-learning decision trees
-to jointly resolve domain and long-tail challenges. ACD automatically
+knowledge integration (CCKR) has a higher likelihood of achieving better
+performance than concatenation in long-tailed domain generalization settings using knowledge-based expert machines.
+Building on this theory we propose the \textbf{Retrieve–Reason–Run Agent
+(R3A)} framework, which builds knowledge-guided deep-learning decision trees
+to jointly resolve domain and long-tail challenges. R3A automatically
 retrieves, structures, and integrates clinically validated knowledge and
 demographic priors from biomedical literature into a causal knowledge base.
-Through an agentic, reinforcement-driven pipeline, ACD iteratively refines
+Through an agentic, reinforcement-driven pipeline, R3A iteratively refines
 feature detectors and aligns learned representations with domain-invariant
 causal cues. Experiments on 10 medical-imaging datasets across four
-modalities show that ACD consistently outperforms state-of-the-art DG and
+modalities show that R3A consistently outperforms state-of-the-art DG and
 LT baselines and reduces manual annotation burden.
 
 \section{Related Work}
@@ -370,12 +321,12 @@ jointly enabling (i) a visual causal feature space for cross-domain
 generalization and (ii) a knowledge feature space for class-specific
 fidelity, including rare conditions.
 
-This dual-space paradigm is realized by the proposed \textbf{CCKI
-algorithm} (Alg.~\ref{alg:ccki}, Fig.~\ref{fig:medxai_framework}), which
+This dual-space paradigm is realized by the proposed \textbf{CCKR
+algorithm} (Alg.~\ref{alg:CCKR}, Fig.~\ref{fig:medxai_framework}), which
 integrates visual features from raw data with knowledge features from
-structured priors. CCKI builds a class-conditional classifier guided by
+structured priors. CCKR builds a class-conditional classifier guided by
 \textbf{Expected Information Gain (EIG)} and a \textbf{purity index} for
-tree-based partitioning over both spaces. Empirically, CCKI outperforms
+tree-based partitioning over both spaces. Empirically, CCKR outperforms
 state-of-the-art baselines on in-domain, single-domain, and multi-domain
 generalization, improving rare-class prediction while maintaining overall
 accuracy.
@@ -434,13 +385,13 @@ benchmarks~\cite{Yang22, Su24a, Tang25, FRoundation25}.
 % \begin{figure}[t]
 %     \centering
 %     \includegraphics[width=0.95\linewidth]{flow.png}
-%     \caption{\textbf{Overview of the Agentic Causal Disentanglement (ACD)
-%     Framework with Class-Conditional Knowledge Integration (CCKI).}
+%     \caption{\textbf{Overview of the Agentic Causal Disentanglement (R3A)
+%     Framework with Class-Conditional Knowledge Integration (CCKR).}
 %     Three coordinated agents: (1) a Clinical Reasoning Agent retrieves
 %     evidence and constructs class-conditional causal chains; (2) a Causal
 %     Disentanglement Agent plans feature extraction and model selection under
 %     data and resource constraints; (3) a Code Generation Agent implements
-%     executable pipelines. The CCKI algorithm iteratively selects classifiers
+%     executable pipelines. The CCKR algorithm iteratively selects classifiers
 %     using expected information gain (EIG) to isolate rare classes via
 %     recursive partitioning.}
 %     \label{fig:medxai_framework}
@@ -449,20 +400,20 @@ benchmarks~\cite{Yang22, Su24a, Tang25, FRoundation25}.
 \begin{figure}[t]
     \centering
     \includegraphics[width=0.99\linewidth]{final-pipeline-1.png}
-    \caption{\textbf{Overview of the Agentic Causal Disentanglement (ACD)
-    Framework with Class-Conditional Knowledge Integration (CCKI).}
+    \caption{\textbf{Overview of the Retrieve–Reason–Run Agent (R3A)
+    Framework with Class-Conditional Knowledge Routing (CCKR).}
     Three coordinated agents: (1) a Clinical Reasoning Agent retrieves
     evidence and constructs class-conditional causal chains; (2) a Causal
     Disentanglement Agent plans feature extraction and model selection under
     data and resource constraints; (3) a Code Generation Agent implements
-    executable pipelines. The CCKI algorithm iteratively selects classifiers
+    executable pipelines. The CCKR algorithm iteratively selects classifiers
     using expected information gain (EIG) to isolate rare classes via
     recursive partitioning.}
-    \label{fig:medxai_framework}
+    \label{medxai_framework2}
 \end{figure}
 
-\section{Class-Conditional Knowledge Integration}
-\label{sec:ccki}
+\section{Class-Conditional Knowledge Routing}
+\label{sec:CCKR}
 
 Assume a hypothesis set $H(X) = \{h_1(X), \ldots, h_m(X)\}$, where some
 $h_i$ are data-driven (\eg, deep learning models) and others are
@@ -470,7 +421,7 @@ knowledge-driven (\eg, clinical rules). Let $h_i(x)$ for $i \le m_k$ be
 knowledge-driven, and the remainder data-driven. For each class
 $y_j \in \mathcal{Y}$, let $\phi_{y_j}$ be an if-then-else rule combining
 $H(X)$ to obtain a class-specific hypothesis. The combinator can be learned
-as a path in a decision tree:
+as a path in a decision tree as shown in Figure \ref{medxai_framework2}:
 \begin{itemize}
 \item \textbf{Step 1:} apply a hypothesis from $H(X)$,
 \item \textbf{Step 2:} decide if it predicts class $y_j$,
@@ -491,7 +442,7 @@ $\pi_{j,t}(x) \in [0,1]$ denote a purity/confidence score of $h_{i_t}$ for
 $y_j$, and let $\theta_j$ be a class-specific threshold. The
 \emph{first-conclusive-step gate} is
 \begin{equation}
-\label{eqn:CCKII}
+\label{eqn:CCKRI}
 \psi_{j,t}(x) = \mathbb{I}\!\left(\alpha_{j,t}(x)=1 \;\wedge\; \pi_{j,t}(x) \ge \theta_j\right)
 \cdot \prod_{s=1}^{t-1} \mathbb{I}\!\left(\pi_{j,s}(x) < \theta_j\right).
 \end{equation}
@@ -500,35 +451,37 @@ $y_j$, and let $\theta_j$ be a class-specific threshold. The
 met, but at step $t$ we achieve conclusive confidence for $y_j$. The final
 class-specific hypothesis is
 \begin{equation}
-\label{eqn:CCKI}
+\label{eqn:CCKR}
 \phi_{y_j}(x) = \sum_{t=1}^{b_j} \psi_{j,t}(x)\, h_{i_t}(x).
 \end{equation}
 By construction at most one $\psi_{j,t}(x)$ is $1$ for fixed $(j, x)$, so
-\eqref{eqn:CCKI} acts as a path-selector. If $i_t \le m_k$ at step $t$ then
+\eqref{eqn:CCKR} acts as a path-selector. If $i_t \le m_k$ at step $t$ then
 $h_{i_t}$ is a knowledge-driven classifier; otherwise it is data-driven.
 
 
 \noindent\textbf{Theorem 1.}
-CCKI enables disentanglement of domain generalization and long-tail components of the per-class generalization bound.
+CCKR enables disentanglement of domain generalization and long-tail components of the per-class generalization bound.
 
 % =========================
 % Theorem 2 (MIN-CHANGE FIX)
 % =========================
 
 \noindent\textbf{Theorem 2.}
-CCKI approach has a higher likelihood of achieving higher joint probability distribution
+CCKR approach has a higher likelihood of achieving higher joint probability distribution
 $P_T(\phi_{\mathcal{Y}}(X),Y)$ than knowledge concatenation $P_T([h(X),K],Y)$ in the target domain
 
 (\emph{proof are in appendices ~\ref{proof}}).
-\subsection{Instance of CCKI}
-\label{sec:ccki_instance}
+\subsection{Instance of CCKR}
+\label{sec:CCKR_instance}
 \begin{wrapfigure}{R}{0.5\textwidth} % Narrowed to 0.5 for better text wrap
 \vspace{-32pt} 
 \begin{minipage}{0.5\textwidth}
+
 \begin{algorithm}[H] % CRITICAL: Use [H] to prevent the algorithm from floating out of the wrapfigure
+
 \small
-\caption{Class-Conditional Knowledge Integration (CCKI)}
-\label{alg:ccki}
+\caption{Class-Conditional Knowledge Routing (CCKR)}
+\label{alg:CCKR}
 \begin{algorithmic}[1]
 \Require Data $(x, y)$, rare label $y_r$, thresholds $\tau_m$, $\tau_g$, $d_{th}$, hypothesis set $\mathcal{H}$
 \State Initialize active set $\Omega \leftarrow \{(x, y)\}$
@@ -555,7 +508,7 @@ $P_T(\phi_{\mathcal{Y}}(X),Y)$ than knowledge concatenation $P_T([h(X),K],Y)$ in
 \vspace{-35 pt}
 \end{wrapfigure}        
 
-Algorithm~\ref{alg:ccki} provides a practical instantiation of the CCKI framework.
+Algorithm~\ref{alg:CCKR} provides a practical instantiation of the CCKR framework.
 The goal is to dynamically select and cascade hypothesis functions  either
 knowledge-driven $h_{\text{kl}}(x)$ or deep learning-driven $h_{\text{dl}}(x)$  so that per-class predictions
 are optimized under long-tailed and domain-shift conditions.
@@ -633,37 +586,36 @@ and choose the tied hypothesis with the largest $\mathrm{Dep}(h;\Omega)$, requir
 the maximum-EIG hypothesis.
 To prevent over-deep cascades, we early-stop when $|s|$ is below a minimum node size or when EIG improvements fall below $\delta$
 for two consecutive iterations.
-CCKI focuses capacity on tail classes while enabling separation between knowledge-driven and data-driven components.
+CCKR focuses capacity on tail classes while enabling separation between knowledge-driven and data-driven components.
 EIG is favored over traditional information gain because it explicitly measures reduction in worst-class tail-weighted entropy deviation
 (Eq.~\eqref{eq:eig_def_B}), prioritizing rare-class uncertainty reduction. The Gini index complements this by providing a stable and interpretable
-impurity measure for deciding whether further cascading is necessary. To justify the design choice, we include ablations that replace EIG with (i) standard information gain (entropy reduction) and (ii) held-out cross-entropy improvement as split criteria, while keeping the CKI/CCKI pipeline fixed (Appendix~\ref{app:eig_baselines}).
+impurity measure for deciding whether further cascading is necessary. To justify the design choice, we include ablations that replace EIG with (i) standard information gain (entropy reduction) and (ii) held-out cross-entropy improvement as split criteria, while keeping the CCKR pipeline fixed (Appendix~\ref{app:eig_baselines}).
 
 \paragraph{Sensitivity analysis.}
 We report sensitivity to $\tau_m,\tau_g,d_{th}$ by sweeping one parameter at a time on the validation split:
 $\tau_m\in\{0,0.01,0.02,0.05\}$, $\tau_g\in\{0.05,0.10,0.20,0.30\}$, and $d_{th}\in\{0.50,0.60,0.70,0.80\}$,
 measuring tail-F1/balanced accuracy, average cascade depth, and tie frequency. Hyperparameters are selected on validation only.
-\subsection{Knowledge Extraction for Enabling CCKI}
+\subsection{Knowledge Extraction for Enabling CCKR}
 
-A central challenge in realizing CCKI is extracting expert knowledge to
+A central challenge in realizing CCKR is extracting expert knowledge to
 guide model decisions. Such extraction often relies on domain experts,
 medical annotators, or specialized deep-learning pipelines. Lesion- or
 structure-specific cues frequently require fine-tuned object detectors such
 as YOLO~\cite{redmon2016yolo}, SAM~\cite{kirillov2023sam}, or
 Detectron2~\cite{wu2019detectron2}, or U-Net~\cite{ronneberger2015unet} for
 vessel segmentation, each typically trained on $\ge 500$ annotated images
-per attribute. This dependence on fine-grained annotations limits CCKI's
-scalability. We address this by developing the \textbf{Agentic Causal
-Disentanglement (ACD)} framework, which autonomously constructs these
+per attribute. This dependence on fine-grained annotations limits CCKR's
+scalability. We address this by developing the R3A framework, which autonomously constructs these
 pipelines, retrieves domain-specific cues, and organizes them into
-structured priors for CCKI, reducing manual involvement.
+structured priors for CCKR, reducing manual involvement.
 
-\section{Proposed Method: Agentic Causal Disentanglement}
+\section{Proposed Method: Retrieve–Reason–Run Agentic framework (R3A)}
 \label{sec:method}
 
-ACD is a modular agentic pipeline that unifies expert medical knowledge
+R3A is a modular agentic pipeline that unifies expert medical knowledge
 with deep-neural learning to address domain shift and long-tailed imbalance
 in clinical imaging. It uses LLM-driven agents to autonomously retrieve,
-structure, and operationalize clinical knowledge, while the downstream CCKI
+structure, and operationalize clinical knowledge, while the downstream CCKR
 module adaptively integrates knowledge-trained classifiers $h_K(x)$ with
 deep models $h_D(x)$ that learn visual representations. The workflow is
 illustrated in Figure~\ref{fig:medxai_framework}. Three core agents
@@ -673,9 +625,9 @@ Agent (CGA)}.
 
 \subsection{Agentic Knowledge Acquisition and Rule Encoding}
 
-We now detail the first stages of ACD: acquiring symbolic knowledge,
-encoding it into features and rules, and preparing it for use in CCKI
-hypotheses $h_K(x)$.
+We now detail the first stages of R3A: acquiring symbolic knowledge,
+encoding it into features and rules, and preparing it for use in CCKR
+hypotheses $h_K(x)$ as illustrated in figure\label{medxai_framework2}.
 
 \textbf{Agent~1 (CRA-A): Medical Knowledge Retrieval.}
 A PubMed-based Retrieval-Augmented Generation system extracts diagnostic
@@ -727,33 +679,37 @@ reinforcement-driven refinement loop re-prompts the LLM until correctness
 constraints are met. The agent does not blindly trust LLM-produced rules:
 it iteratively proposes candidate pipelines and retains only those yielding
 measurable gain over the deep-learning-only baseline, discarding
-non-improving candidates. The final CCKI cascade therefore uses only
+non-improving candidates. The final CCKR cascade therefore uses only
 validated knowledge branches and otherwise defaults to deep experts; this
 is demonstrated in the ablation of Section~\ref{ablation_study1}.
 \section{Experiments}
+
+
 \label{sec:experiments}
 
-We evaluate ACD across four clinically critical applications spanning
+We evaluate R3A across four clinically critical applications spanning
 neuroimaging, ophthalmology, cardiology, and electrophysiology. Detailed
-pipelines, prompts, and implementation are in the supplementary material.
+pipelines, prompts, and implementation are in the supplementary material. For each application, we choose datasets that have a rare class, making the dataset long tailed as described in table
 
 \subsection{Application 1: Diabetic Retinopathy Grading}
 
 We evaluate on 5-class DR grading across APTOS, EyePACS, Messidor-1, and
 Messidor-2. The hypothesis pool contains ten binary classifiers: five
 ViT-based deep models $h_D(x)$ (one per grade) and five knowledge-driven
-classifiers $h_K(x)$ from lesion and vessel-morphology rules. The CDA
+classifiers $h_K(x)$ from lesion and vessel-morphology rules described in table \ref{app:dr_knowledge}. The CDA
 encodes clinical priors (microaneurysm burden, hemorrhage severity, vessel
 tortuosity); the CGA uses YOLOv11-based detectors and vessel-analysis
-routines to instantiate them; CCKI organizes $h_D(x)$ and $h_K(x)$ into a
+routines to instantiate them; CCKR organizes $h_D(x)$ and $h_K(x)$ into a
 knowledge-guided cascade. \paragraph{Results.}
 Table~\ref{tab:dr_all_results} summarizes three regimes: (1) \textbf{Normal
 DG}, train on APTOS and test on external datasets; (2) \textbf{Single-Domain
 Generalization (SDG)}, train on one source and evaluate on unseen targets;
 (3) \textbf{Multi-Domain Generalization (MDG)}, leave-one-domain-out
-(train on three, test on one). Across settings, ACD/CCKI consistently
+(train on three, test on one). Across settings, R3A/CCKR consistently
 improves cross-domain accuracy over the ViT-only branch and DG baselines
-(Fishr, SPSD-ViT), with $+5$--$6$ point F1 gains for the rare severe DR stages.
+(Fishr, SPSD-ViT), with $+5$--$6$ point F1 gains for the rare severe DR stages. The knowledge routed pipeline built by R3A is shown in Figure \ref{fig:dr_framework}.
+
+
 \begin{table*}[h] % table* spans two columns if using a two-column template
 \centering
 \scriptsize
@@ -761,7 +717,7 @@ improves cross-domain accuracy over the ViT-only branch and DG baselines
 \renewcommand{\arraystretch}{1.2} % Adds a "delicate" vertical breathing room
 
 \caption{\footnotesize \textbf{Generalization Performance across Multi-Domain Protocols.} 
-Performance comparison of our Knowledge-Guided Fusion (ACD) against standard ViT and state-of-the-art DG baselines. 
+Performance comparison of our Knowledge-Guided Fusion (R3A) against standard ViT and state-of-the-art DG baselines. 
 Targets are defined as the union of all available domains excluding the source. 
 Rare stage evaluation (MDG-Rare) focuses on class-specific F1-scores for Stage 3 (Severe) and Stage 4 (Proliferative) DR.}
 \label{tab:dr_all_results}
@@ -771,98 +727,89 @@ Rare stage evaluation (MDG-Rare) focuses on class-specific F1-scores for Stage 3
 \textbf{Protocol} & \textbf{Source Domain} & \textbf{Target Domain(s)} & \textbf{Method} & \textbf{Metric} & \textbf{Value (\%)} \\
 \midrule
 \rowcolor[gray]{0.95} \textit{Normal DG} & APTOS & EyePACS, M1, M2 & DL Branch (ViT) & Accuracy & $78.4 \pm 0.4$ \\
-& APTOS & EyePACS, M1, M2 & \textbf{Ours (ACD/CCKI)} & \textbf{Accuracy} & $\mathbf{84.69 \pm 0.3}$ \\
+& APTOS & EyePACS, M1, M2 & \textbf{Ours (R3A/CCKR)} & \textbf{Accuracy} & $\mathbf{84.69 \pm 0.3}$ \\
 \midrule
 \multirow{6}{*}{\textit{SDG}} 
-& APTOS & EyePACS, M1, M2 & Ours (ACD Fusion) & Accuracy & $\mathbf{59.9 \pm 0.2}$ \\
-& MESSIDOR-1 & APTOS, EyePACS, M2 & Ours (ACD Fusion) & Accuracy & $\mathbf{67.1 \pm 0.4}$ \\
-& MESSIDOR-2 & APTOS, EyePACS, M1 & Ours (ACD Fusion) & Accuracy & $\mathbf{65.5 \pm 0.3}$ \\
-& EyePACS & APTOS, M1, M2 & Ours (ACD Fusion) & Accuracy & $61.7 \pm 0.4$ \\
+& APTOS & EyePACS, M1, M2 & Ours (R3A Fusion) & Accuracy & $\mathbf{59.9 \pm 0.2}$ \\
+& MESSIDOR-1 & APTOS, EyePACS, M2 & Ours (R3A Fusion) & Accuracy & $\mathbf{67.1 \pm 0.4}$ \\
+& MESSIDOR-2 & APTOS, EyePACS, M1 & Ours (R3A Fusion) & Accuracy & $\mathbf{65.5 \pm 0.3}$ \\
+& EyePACS & APTOS, M1, M2 & Ours (R3A Fusion) & Accuracy & $61.7 \pm 0.4$ \\
 & EyePACS & APTOS, M1, M2 & Best DG (SPSD-ViT) & \textbf{Accuracy} & $\mathbf{62.5 \pm 0.2}$ \\
 \midrule
 \multirow{4}{*}{\textit{MDG}} 
 & E, M1, M2 & APTOS & Fishr (ResNet50) & Accuracy & $47.0 \pm 0.6$ \\
 & E, M1, M2 & APTOS & SPSD-ViT (T2T-14) & Accuracy & $50.0 \pm 0.5$ \\
-& E, M1, M2 & APTOS & KL Branch (KL-CCKI) & Accuracy & $53.1 \pm 0.3$ \\
-& E, M1, M2 & APTOS & \textbf{Ours (ACD Fusion)} & \textbf{Accuracy} & $\mathbf{60.7 \pm 0.2}$ \\
+& E, M1, M2 & APTOS & KL Branch (KL-CCKR) & Accuracy & $53.1 \pm 0.3$ \\
+& E, M1, M2 & APTOS & \textbf{Ours (R3A Fusion)} & \textbf{Accuracy} & $\mathbf{60.7 \pm 0.2}$ \\
 \midrule
 \rowcolor[gray]{0.95} \multicolumn{6}{l}{\textit{MDG (Rare Stage Analysis - Severe DR Class 3 \& 4)}} \\
 & E, M1, M2 & APTOS (Stage 3) & DL Branch (ViT) & F1 Score & $45.2 \pm 0.8$ \\
-& E, M1, M2 & APTOS (Stage 3) & \textbf{Ours (ACD Fusion)} & \textbf{F1 Score} & $\mathbf{50.1 \pm 0.5}$ \\
+& E, M1, M2 & APTOS (Stage 3) & \textbf{Ours (R3A Fusion)} & \textbf{F1 Score} & $\mathbf{50.1 \pm 0.5}$ \\
 & E, M1, M2 & APTOS (Stage 4) & DL Branch (ViT) & F1 Score & $51.8 \pm 0.7$ \\
-& E, M1, M2 & APTOS (Stage 4) & \textbf{Ours (ACD Fusion)} & \textbf{F1 Score} & $\mathbf{57.3 \pm 0.4}$ \\
+& E, M1, M2 & APTOS (Stage 4) & \textbf{Ours (R3A Fusion)} & \textbf{F1 Score} & $\mathbf{57.3 \pm 0.4}$ \\
 \bottomrule
 \end{tabular}
 \end{table*}
 \begin{table*}[h]
 \centering
 \footnotesize
-\setlength{\tabcolsep}{2pt}
+\setlength{\tabcolsep}{4pt} % Slightly increased padding for readability
 \scriptsize
 \renewcommand{\arraystretch}{1.05}
-
-\caption{Comparison of GRACE with task-specific baselines across modalities. Rare classes denote clinically critical underrepresented conditions.}
+\caption{Comparison of R3A with task-specific baselines across modalities. Rare classes denote clinically critical underrepresented conditions.}
 \begin{tabular}{
-p{2.2cm}
-p{1.5cm}
-p{2.5cm}
-c
-p{1.8cm}
-c
-c
-p{2.3cm}
-p{2.7cm}
+p{2.2cm} % Task
+p{2.6cm} % Modality (Increased from 1.5cm)
+p{2.6cm} % Dataset (Increased from 2.5cm)
+c        % R3A
+p{1.8cm} % Baseline
+c        % Base
+c        % Gain
+p{1.8cm} % Rare Class (Slightly reduced to balance total width)
 }
 \toprule
-\textbf{Task} & \textbf{Modality} & \textbf{Dataset} & \textbf{GRACE} & \textbf{Baseline} & \textbf{Base} & \textbf{Gain} & \textbf{Rare Class} \\
+\textbf{Task} & \textbf{Modality} & \textbf{Dataset} & \textbf{R3A} & \textbf{Baseline} & \textbf{Base} & \textbf{Gain} & \textbf{Rare Class} \\
 \midrule
-
 \rowcolor[gray]{0.95}
 SOZ Localization
-& MRI
-& PCH~\cite{kamboj2024expertTAI}
+& MRI Images
+& Phoenix Children’s Hospital (PCH)~\cite{kamboj2024expertTAI}
 & \textbf{84.6}
 & CuPKL~\cite{kamboj2024expertTAI}
 & 46.1
 & $\uparrow$ 38.5
 & SOZ-positive
- \\
-
+\\
 Diabetic Retinopathy Grading
-& Fundus
+& Fundus Images
 & APTOS 2019~\cite{kauppi2019}
 & \textbf{84.14}
 & SPSD-ViT~\cite{Galappaththige2024}
 & 78.4
 & $\uparrow$ 5.74
 & Proliferative DR
- \\
-
+\\
 \rowcolor[gray]{0.95}
 CAD Detection (Stress ECG)
-& ECG
-& MISC~\cite{Banerjee2025StressECG}
+& Stress electrocardiogram (ECG)
+& Mayo Integrated Stress Center (MISC)~\cite{Banerjee2025StressECG}
 & \textbf{92.2}
-& Transformer~\cite{Banerjee2025StressECG}
+& Transformer-based model~\cite{Banerjee2025StressECG}
 & 82.0
 & $\uparrow$ 10.2
 & Severe CAD\\
-
-
 Cardiac Function Assessment
-& Echo Video
+& Echocardiogram Videos
 & EchoNet-Dynamic~\cite{EchoNetDynamic,StanfordEchoNet}
 & 94.0
 & R3D CNN~\cite{EchoNetDynamic}
 & \textbf{97.0}
 & $\downarrow$ 3.0
 & EF $<30\%$, 30--40\%
-
 \\
 \bottomrule
 \end{tabular}
-
-\label{tab:grace_results}
+\label{tab:R3A_results}
 \end{table*}
 \begin{table*}[h]
 \centering
@@ -871,7 +818,7 @@ Cardiac Function Assessment
 \renewcommand{\arraystretch}{1.25} % Elegant vertical spacing
 
 \caption{\footnotesize \textbf{Cross-Application Performance and Generalization Gains.} 
-Summary of performance improvements using our ACD framework across four medical domains. 
+Summary of performance improvements using our R3A framework across four medical domains. 
 ID (In-Domain) Gain represents improvement over the baseline on the training distribution. 
 OOD (Out-of-Domain) Gain represents improvement over baseline on unseen target domains (Cross-Center/Cross-Dataset).}
 \label{tab:cross_app_summary}
@@ -903,11 +850,11 @@ extracted via Independent Component Analysis, set up by the CRA, which
 also encodes neurophysiological priors into a compact knowledge feature
 set (K-NumC, K-ThruV, K-SparseA, K-SparseF). The CGA implements the
 extraction pipelines and a 2D CNN branch that classifies noise vs.
-non-noise ICs. The CDA constructs a CCKI decision tree over $h_K(x)$ and
+non-noise ICs. The CDA constructs a CCKR decision tree over $h_K(x)$ and
 $h_D(x)$ by ranking hypotheses with Entropy Imbalance Gain (EIG). Under
 extreme rare-class imbalance ($\sim$5 SOZ ICs per subject), Gini impurity
 decides whether further refinement via the deep branch is required. \textbf{Results.}
-Table~\ref{tab:soz_results} summarizes performance. The fused ACD model
+Table~\ref{tab:soz_results} summarizes performance. The fused R3A model
 achieves 84.6\% accuracy and 89.7\% sensitivity, outperforming the
 baseline. Following the IC-triage effort metric of Kamboj
 \etal~\cite{kamboj2024expertTAI}, our framework reduced expert review from
@@ -917,13 +864,13 @@ Children's Hospital (PCH) and testing on University of North Carolina
 (UNC) data without fine-tuning; performance remained stable (87.5\%
 accuracy) even as the deep branch degraded from 80\% to 70\% noise-classification
 accuracy. Since the SOZ class is itself rare, overall accuracy reflects
-improvement.
+improvement. The knowledge routed pipeline built by R3A is shown in Figure \ref{fig:deepxsoz_framework}.
 
 
 \subsection{Application 3: Cardiac Function Assessment}
 
 \paragraph{Setup.}
-We apply ACD to estimating left-ventricular ejection fraction (LVEF) from
+We apply R3A to estimating left-ventricular ejection fraction (LVEF) from
 apical four-chamber echocardiogram videos. Unlike standard end-to-end
 regression, our pipeline integrates clinical knowledge of ventricular
 anatomy and beat-to-beat temporal structure, inspired by the EchoNet-Dynamic
@@ -934,7 +881,7 @@ code that fuses deep spatio-temporal features with expert-derived
 cycle-wise summaries and enforces beat-by-beat aggregation rather than
 single-clip regression. We train and validate on the public EchoNet-Dynamic
 dataset~\cite{echonetdataset} using the baseline split. \textbf{Results.}
-Because ACD targets generalizable knowledge integration rather than
+Because R3A targets generalizable knowledge integration rather than
 hand-tuned video optimization, it performs slightly below the original
 EchoNet-Dynamic but maintains clinically meaningful accuracy
 (Table~\ref{tab:cardiac_results}).
@@ -943,16 +890,16 @@ EchoNet-Dynamic but maintains clinically meaningful accuracy
 \subsection{Application 4: Coronary Artery Disease Detection from ECG}
 
 \paragraph{Setup.}
-We evaluate ACD on Exercise Stress ECG (ESE) data from the Mayo Integrated
+We evaluate R3A on Exercise Stress ECG (ESE) data from the Mayo Integrated
 Stress Center (MISC) database. Conventional CNNs and ViTs often miss
 domain-specific temporal and physiological cues for ischemic event
-detection. ACD integrates cardiologist knowledge through the CRA and CDA
+detection. R3A integrates cardiologist knowledge through the CRA and CDA
 in the form of \textbf{lead-selection masks} and \textbf{MET-level
 encoding}, reflecting clinicians' understanding of ischemic-signal
 relevance and guiding transformer attention toward clinically meaningful
 ECG regions. All models were trained on 726 subjects and tested on 227
 unseen cases under the same split as prior work, yielding an average 10\%
-gain over baselines.
+gain over baselines as shown in the table \ref{tab:cad_results}.
 
 
 \section{Conclusion and Discussion}
@@ -968,15 +915,15 @@ favors flatter, domain-invariant solutions, while LT learning amplifies
 minority gradients toward sharper minima, producing gradient
 misalignment.
 
-To address this we propose Class-Conditional Knowledge Integration (CCKI),
+To address this we propose Class-Conditional Knowledge Routing (CCKR),
 a decision cascade that routes predictions through deep and
 knowledge-driven hypotheses via a first-conclusive-step gating mechanism
-rather than naive feature concatenation. Building on CCKI, we introduce
-Agentic Causal Disentanglement (ACD), a coordinated multi-agent framework
+rather than naive feature concatenation. Building on CCKR, we introduce
+agentic framework (R3A), a coordinated multi-agent framework
 that (i) retrieves clinically grounded priors, (ii) operationalizes them
 into computable biomarkers and causal factors, and (iii) validates the
 resulting pipelines before integration with deep predictors. Across four
-clinical applications and ten datasets, ACD consistently improves
+clinical applications and ten datasets, R3A consistently improves
 cross-domain and rare-class recognition while reducing manual annotation
 burden.
 
@@ -994,7 +941,7 @@ burden.
 % ...
 % \section{Proof of Theorem 2}
 % ...
-% \section{ACD Pipeline Details}
+% \section{R3A Pipeline Details}
 % \section{Prompt Templates}
 \newpage
 
@@ -1002,8 +949,8 @@ burden.
 \section{Appendix}
 \noindent\textbf{Theorem 1 Proof}
 \label{proof}
-At each depth of the CCKI sequence we either use a data-driven machine or a knowledge-guided machine.
-Hence, each depth of CCKI results in a hypothesis with mutually exclusive parameter sets.
+At each depth of the CCKR sequence we either use a data-driven machine or a knowledge-guided machine.
+Hence, each depth of CCKR results in a hypothesis with mutually exclusive parameter sets.
 More precisely, let knowledge-driven experts use parameters $\theta_K$ and data-driven experts use parameters $\theta_D$,
 with $\theta_K\cap\theta_D=\varnothing$, and treat the gate $\psi_{j,t}(x)$ as \emph{frozen} (stop-gradient), i.e.,
 $\nabla_{\theta_K}\psi_{j,t}(x)=\nabla_{\theta_D}\psi_{j,t}(x)=0$.
@@ -1059,7 +1006,7 @@ In particular, there are \emph{no cross-terms}:
 $\nabla_{\theta_D}\ell(h_{i_t}(x;\theta_K),y)=0$ and $\nabla_{\theta_K}\ell(h_{i_t}(x;\theta_D),y)=0$
 because $\theta_K\cap\theta_D=\varnothing$ (and $\nabla\psi_{j,t}=0$).
 Therefore, the domain-generalization (smoothness) optimization and the long-tail (sharpness) optimization are disentangled
-under the CCKI class of hypotheses. \hfill$\square$
+under the CCKR class of hypotheses. \hfill$\square$
 
 
 \noindent\textbf{Theorem 2 Proof.}
@@ -1081,7 +1028,7 @@ P_T(\phi_{y_j}(X),Y)\;\ge\;\max_t \;P_T(\psi_{j,t}(X)=1)\;P_T(h_{i_t}(X),Y\mid \
 In contrast, common concatenation / multiplicative fusion of a data-driven model with knowledge features (or an ``AND''-type
 combination that requires agreement) behaves multiplicatively and is typically upper-bounded by the weakest component,
 e.g., $\prod_q p_q \le \min_q p_q$ for $p_q\in[0,1]$. Hence, if any fused component has low joint probability in the target
-domain, the concatenation-based joint can collapse, whereas the CCKI mixture can route to (and be supported by) a higher
+domain, the concatenation-based joint can collapse, whereas the CCKR mixture can route to (and be supported by) a higher
 probability expert, giving it better likelihood of maximizing the joint probability. \hfill$\square$
 \section{Extended Related Work}
 \label{app:extended-related}
@@ -1099,27 +1046,27 @@ of multiplicative fusion, e.g., modified product rules~\cite{alkoot2002}.
 These results provide principled guidance for \emph{global} fusion
 operators applied uniformly across all inputs.
 
-\paragraph{Why CCKI is not a re-statement of sum/product fusion.}
-CCKI does \emph{not} claim novelty in proposing or analyzing generic fixed
-fusion operators. Instead, CCKI targets a different problem:
+\paragraph{Why CCKR is not a re-statement of sum/product fusion.}
+CCKR does \emph{not} claim novelty in proposing or analyzing generic fixed
+fusion operators. Instead, CCKR targets a different problem:
 \emph{class-conditional, knowledge-guided expert selection} in the MDLT
 setting, where the reliability of a knowledge expert ($h_K$) and a deep
 expert ($h_D$) can vary substantially across classes and domains. Rather
 than combining posteriors via a single global operator (sum/product) for
-every input, CCKI constructs a \emph{routing/cascade policy} that decides
+every input, CCKR constructs a \emph{routing/cascade policy} that decides
 which expert should dominate for specific classes or regions. Concretely,
-CCKI uses information-based criteria (Expected Information Gain, EIG) and
+CCKR uses information-based criteria (Expected Information Gain, EIG) and
 impurity reduction (Gini) to select knowledge-anchored decision paths that
 preferentially route samples toward $h_K$ or $h_D$ when that expert is
 expected to be more informative and reliable. This design is intended to
-avoid regimes where uniform fusion is dominated by the weaker expert---a
+avoid regimes where uniform fusion is dominated by the weaker expert a
 common failure mode under domain shift and for tail classes.
 \vspace{-0.05in} % Spacing above
 \begin{center}
     \includegraphics[trim=0 0 0 0, clip, width=0.8\textwidth]{moe.png} 
-    
+\label{fig3}   
     % This command allows a caption without needing a \begin{figure}
-    \captionof{figure}{Comparison of ensemble paradigms: while prior methods (Boosting, Bagging, MoE) lack holistic imbalance awareness, CCKI uniquely integrates representation-aware selection and class-specific routing for robust imbalanced learning.}
+    \captionof{figure}{Comparison of ensemble paradigms: while prior methods (Boosting, Bagging, MoE) lack holistic imbalance awareness, CCKR uniquely integrates representation-aware selection and class-specific routing for robust imbalanced learning.}
     \label{fig:Lorenz}
 \end{center}
 \vspace{-0.05in} % Spacing below
@@ -1127,7 +1074,7 @@ common failure mode under domain shift and for tail classes.
 \paragraph{Relation to Mixture-of-Experts (MoE).}
 A typical MoE learns a gating network that outputs mixture weights over
 experts (soft or top-$k$) and is trained end-to-end to minimize prediction
-loss, often with sparsity or load-balancing regularizers. CCKI is MoE-like
+loss, often with sparsity or load-balancing regularizers. CCKR is MoE-like
 in spirit (routing among experts) but differs in two key ways: (i) the
 routing is explicitly \emph{knowledge-conditioned and class-conditional},
 aligning decisions with interpretable knowledge partitions, and (ii) the
@@ -1135,32 +1082,32 @@ routing/cascade is guided by \emph{information-theoretic and purity}
 criteria (EIG, Gini) that encourage expert selection to reflect where
 knowledge or deep representations are most informative, rather than
 purely-latent gating. We treat classical late-fusion rules and learned
-fusion mechanisms as complementary baselines; CCKI emphasizes structured,
+fusion mechanisms as complementary baselines; CCKR emphasizes structured,
 knowledge-guided routing under MDLT constraints.
 \paragraph{Relation to tree-based learning.}
 Standard decision trees and ensembles (RF, GBDT) select splits over
 \emph{input features} to maximize impurity reduction (e.g., Gini),
-yielding leaves that store class distributions. While CCKI also employs
+yielding leaves that store class distributions. While CCKR also employs
 EIG and Gini, the split semantics differ: the criterion is used to build a
 \emph{structured decision process over experts and paths} ($h_K$ vs.\
 $h_D$) grounded in knowledge partitions, rather than solely a
 feature-threshold partition of the input space. The resulting structure is
 best interpreted as an \emph{expert-routing tree/cascade} rather than a
-conventional feature-only decision tree.   
+conventional feature-only decision tree as shown in figure \ref{fig3}.   
 \section{Application Details}
 \label{app:applications}
-\paragraph{Task-Wise Agent Action Decomposition Across Clinical Domains:} Table~\ref{tab:grace_agent_grounding_summary} summarizes how \texttit{GRACE} integrates retrieval, reasoning, and execution across diverse clinical domains by grounding predictions in domain-specific medical knowledge. Each application encodes structured priors and task-relevant constraints, enabling robust handling of class imbalance, rare cases, and modality-specific variability. This unified agentic design ensures consistent knowledge-guided inference while adapting to heterogeneous data sources and clinical objectives.
+\paragraph{Task-Wise Agent Action Decomposition Across Clinical Domains:} Table~\ref{tab:R3A_agent_grounding_summary} summarizes how \texttit{R3A} integrates retrieval, reasoning, and execution across diverse clinical domains by grounding predictions in domain-specific medical knowledge. Each application encodes structured priors and task-relevant constraints, enabling robust handling of class imbalance, rare cases, and modality-specific variability. This unified agentic design ensures consistent knowledge-guided inference while adapting to heterogeneous data sources and clinical objectives.
 \begin{table*}[h]
 \centering
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
 \renewcommand{\arraystretch}{1.25}
-\caption{Cross-application summary of \textbf{GRACE}. For each domain we detail the sources retrieved, the clinical knowledge encoded during reasoning, and the computational tools invoked at execution.  Each dataset is partitioned using an 80\% training split and a 20\% testing split.}
+\caption{Cross-application summary of \textbf{R3A}. For each domain we detail the sources retrieved, the clinical knowledge encoded during reasoning, and the computational tools invoked at execution.  Each dataset is partitioned using an 80\% training split and a 20\% testing split.}
 
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{p{2.3cm} p{2.8cm} p{4.2cm} p{4.2cm} p{4.2cm}}
 \toprule
-\textbf{Application} & \textbf{Task} & \textbf{Retrieve Agent} & \textbf{Reason Agent} & \textbf{Execute Agent} \\
+\textbf{Application} & \textbf{Task} & \textbf{CRA: Retrieve Agent} & \textbf{CDA: Reason Agent} & \textbf{CGA: Run Agent} \\
 \midrule
 
 \textbf{Diabetic Retinopathy} &
@@ -1197,7 +1144,7 @@ Lead-selection masking (top-$k$ leads); MET-level one-hot encoding concatenated 
 \end{tabular}%
 }
 \vspace{-2 pt}
-\label{tab:grace_agent_grounding_summary}
+\label{tab:R3A_agent_grounding_summary}
 \end{table*}
 \subsection{Diabetic Retinopathy: Expert Knowledge and 5-Stage Grading}
 \label{app:dr_knowledge}    
@@ -1212,7 +1159,7 @@ Lead-selection masking (top-$k$ leads); MET-level one-hot encoding concatenated 
 \vspace{-8pt}
 \end{wrapfigure}
 \paragraph{Knowledge Extraction.}
-We construct a clinically grounded knowledge base by extracting structured symptom-level rules from ophthalmology literature and diagnostic guidelines. Each diabetic retinopathy (DR) stage is characterized using observable retinal biomarkers such as microaneurysms, haemorrhages, exudates, and neovascularization, along with severity thresholds and progression risks. These features are mapped to diagnostic criteria (e.g., $>20$ haemorrhages per quadrant for Severe NPDR) and encoded into a symbolic representation capturing causal relationships between visual patterns and disease stages. This knowledge layer enables integration with deep models, improving interpretability, robustness, and rare-class generalization.
+We construct a clinically grounded knowledge base by extracting structured symptom-level rules from ophthalmology literature and diagnostic guidelines. Each diabetic retinopathy (DR) stage is characterized using observable retinal biomarkers such as microaneurysms, haemorrhages, exudates, and neovascularization (Figure \ref{fig:dr_stages}), along with severity thresholds and progression risks. These features are mapped to diagnostic criteria (e.g., $>20$ haemorrhages per quadrant for Severe NPDR) and encoded into a symbolic representation capturing causal relationships between visual patterns and disease stages. This knowledge layer enables integration with deep models, improving interpretability, robustness, and rare-class generalization.
 \begin{wraptable}{r}{0.63\textwidth}
 \vspace{-0.25in}
 \centering
@@ -1253,9 +1200,9 @@ Fragile vessel growth on optic disc (NVD) or retina (NVE). Defining trait of PDR
 \subsection{Cardiac Function: Discussion of EchoNet-Dynamic Comparison}
 \label{app:echo}
 
-ACD does not surpass the hand-engineered EchoNet-Dynamic system, which
+R3A does not surpass the hand-engineered EchoNet-Dynamic system, which
 benefits from extensive video-specific optimization and years of
-domain-tailored refinement. Importantly, ACD provides substantial
+domain-tailored refinement. Importantly, R3A provides substantial
 reductions in human-intervention workload. While a formal measurement is
 deferred to future work, the improvement in external MAE indicates
 enhanced domain generalization, and beat-level aggregation reduces
@@ -1268,7 +1215,7 @@ required human-review effort by an estimated $\sim$70\%.
 \scriptsize
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.15}
-\captionof{table}{\textbf{SOZ localization on rs-fMRI.} ACD reduces
+\captionof{table}{\textbf{SOZ localization on rs-fMRI.} R3A reduces
 IC-review workload from 110 to 18 components per subject (84.2\%
 reduction) while improving accuracy and sensitivity over the 2D-CNN
 baseline~\cite{kamboj2024expert}.}
@@ -1278,7 +1225,7 @@ baseline~\cite{kamboj2024expert}.}
 \textbf{Method} & \textbf{Acc (\%)} & \textbf{Sens (\%)} & \textbf{Effort} \\
 \midrule
 \textit{DL Branch (2D CNN)} & 46.1 & 48.9 & 110 \\
-\textit{ACD (Ours)} & \textbf{84.6} & \textbf{89.7} & \textbf{18} \\
+\textit{R3A (Ours)} & \textbf{84.6} & \textbf{89.7} & \textbf{18} \\
 \midrule
 \rowcolor[gray]{0.95}
 \textbf{Improvement} & $\mathbf{+38.5}$ & $\mathbf{+40.8}$ & $\mathbf{-83.6\%}$ \\
@@ -1292,7 +1239,7 @@ baseline~\cite{kamboj2024expert}.}
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.15}
 \captionof{table}{\textbf{LVEF estimation on EchoNet-Dynamic.} EF MAE
-reported as \emph{internal / external / beat-to-beat (variance)}. ACD
+reported as \emph{internal / external / beat-to-beat (variance)}. R3A
 approaches but does not surpass EchoNet-Dynamic, with similar HF AUC at
 reduced engineering cost.}
 \label{tab:cardiac_results}
@@ -1301,7 +1248,7 @@ reduced engineering cost.}
 \textbf{Method} & \textbf{EF MAE / Beat Var} & \textbf{HF AUC} \\
 \midrule
 \textit{EchoNet-Dynamic} & 4.1 / 6.0 / 2.6 (6.4) & 0.97 \\
-\textit{ACD (Ours)}      & 4.8 / 6.6 / 3.1 (5.9) & 0.94 \\
+\textit{R3A (Ours)}      & 4.8 / 6.6 / 3.1 (5.9) & 0.94 \\
 \midrule
 \rowcolor[gray]{0.95}
 \textbf{Difference} & $-0.7$ MAE & $-0.03$ \\
@@ -1316,9 +1263,10 @@ reduced engineering cost.}
 \scriptsize
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.15}
-\caption{\textbf{CAD detection on the ESE dataset.} ACD integrates expert
+\caption{\textbf{CAD detection on the ESE dataset.} R3A integrates expert
 priors via lead-selection masks and MET-level encoding, outperforming
-both the ViT baseline and manual clinical diagnosis on PPV and AUC.}
+both the ViT baseline and manual clinical diagnosis on positive predictive value (PPV),  negative predictive
+value (NPV) and are under the curve (AUC).}
 \label{tab:cad_results}
 \begin{tabular}{lccc}
 \toprule
@@ -1326,7 +1274,7 @@ both the ViT baseline and manual clinical diagnosis on PPV and AUC.}
 \midrule
 \textit{Manual Diagnosis}     & 77.0          & 96.0          & --            \\
 \textit{DL Branch (ViT)}      & 79.0          & 81.8          & 82.0          \\
-\textit{ACD (Ours)}           & \textbf{91.2} & \textbf{93.0} & \textbf{92.2} \\
+\textit{R3A (Ours)}           & \textbf{91.2} & \textbf{93.0} & \textbf{92.2} \\
 \midrule
 \rowcolor[gray]{0.95}
 \textbf{Improvement over ViT} & $\mathbf{+12.2}$ & $\mathbf{+11.2}$ & $\mathbf{+10.2}$ \\
@@ -1334,14 +1282,13 @@ both the ViT baseline and manual clinical diagnosis on PPV and AUC.}
 \end{tabular}
 \end{table}
 
-
 \subsection{Experimental Setup of Clinical Motivation Table ~\ref{tab:perclass_f1}}
 \label{table1}
 \paragraph{Why rare-class recognition is high-stakes.}
 In diabetic retinopathy, Grade~4 (Proliferative DR) affects only $\sim$2\% of screened patients yet carries a $\sim$50\% risk of severe vision loss within five years if untreated~\cite{etdrs1991}. A model that achieves 90\% overall accuracy by failing to detect this class is clinically \emph{dangerous}, not useful. Beyond ophthalmology, the same failure mode appears in any high-stakes decision pipeline with skewed priors: seizure onset zone (SOZ) localization, where SOZ-positive components constitute only $\sim$5 out of $\sim$110 per subject yet directly impact surgical planning~\cite{kamboj2024expert}; autonomous driving perception, where rare events such as a child behind a parked car, black ice, or a fallen cyclist occur in a tiny fraction of frames but account for a large proportion of fatalities; and pathology screening, where rare malignant subtypes dominate missed-diagnosis risk. In all such settings, macro-averaged or tail-specific metrics reveal failures that overall accuracy conceals: standard models remain blind to the cases that matter most.
 
 \paragraph{On the fairness of baseline comparisons.}
-A natural concern in method comparison is whether performance gains arise from algorithmic design or from backbone capacity. ERM\_ViT and ERM\_SPSDViT use the same ViT backbone family (DeiT-S / T2T-14) as the deep branch $h_D(x)$ in our model. Our method introduces no additional backbone capacity; instead, it augments the same ViT with knowledge-driven classifiers $h_K(x)$ and a CCKI routing mechanism. Therefore, improvements over ERM baselines are attributable to the integration and routing strategy rather than a stronger feature extractor. We further validate this in Ablation~III (Section~\ref{ablation_study1}), where CCKI is compared against ensemble and mixture-of-experts (MoE) baselines under identical backbone and training configurations, isolating the effect of the routing mechanism.
+A natural concern in method comparison is whether performance gains arise from algorithmic design or from backbone capacity. ERM\_ViT and ERM\_SPSDViT use the same ViT backbone family (DeiT-S / T2T-14) as the deep branch $h_D(x)$ in our model. Our method introduces no additional backbone capacity; instead, it augments the same ViT with knowledge-driven classifiers $h_K(x)$ and a CCKR routing mechanism. Therefore, improvements over ERM baselines are attributable to the integration and routing strategy rather than a stronger feature extractor. We further validate this in Ablation~III (Section~\ref{ablation_study1}), where CCKR is compared against ensemble and mixture-of-experts (MoE) baselines under identical backbone and training configurations, isolating the effect of the routing mechanism.
 
 \paragraph{Per-class F1 analysis on Messidor (cross-domain).}
 Table~\ref{tab:perclass_f1} reports per-class F1 scores on the Messidor cross-domain split ($n=1744$), revealing a consistent and clinically meaningful trend. Both ERM\_ViT and ERM\_SPSDViT exhibit near-zero performance on minority grades: ERM\_ViT achieves 0.0 on G1 (Mild) and only 1.3 on G3 (Severe), while ERM\_SPSDViT improves slightly on G3 (5.9) but regresses on G4 (PDR) from 8.6 to 3.3. This behavior reflects a fundamental trade-off in Eq.~\eqref{eq:classrisk}: stronger domain-invariance regularization compresses the feature space, disproportionately collapsing rare-class manifolds with small $n_c$.
@@ -1353,7 +1300,7 @@ The macro-F1 gap between ERM\_ViT (11.2) and ERM\_SPSDViT (13.6) is marginal, in
 
 \label{ablation_study1}
 \textbf{Ablation Study I: Evaluating Symbolic Knowledge for Selecting $h_{\mathrm{K}}(x)$.}
-To determine which symbolic knowledge features are suitable for constructing the CCKI knowledge hypothesis $h_{\mathrm{K}}(x)$, we evaluate two clinically motivated feature families on APTOS:
+To determine which symbolic knowledge features are suitable for constructing the CCKR knowledge hypothesis $h_{\mathrm{K}}(x)$, we evaluate two clinically motivated feature families on APTOS:
 (1) lesion biomarkers (exudates, hard hemorrhages, soft hemorrhages, cotton wool spots), and
 (2) retinal vein morphology (tortuosity, caliber, branching angles).
 The goal is to test whether these symbolic features provide domain-stable discriminative power consistent with the requirement that $P(K \mid Y)$ remains approximately invariant across imaging centers.
@@ -1362,15 +1309,16 @@ We train five standard classifiers on each feature set and report performance in
 Across all models, lesion-only features yield substantially higher accuracy and F1-score than the combined lesion-plus-vein feature set.
 Gradient Boosting with lesion biomarkers achieves the best results (accuracy 0.8465, F1 0.8412), indicating that lesion-level symbolic cues form a clean, well-separated representation for DR stages.
 In contrast, adding vein morphology consistently degrades performance for every classifier, suggesting that these features introduce domain-sensitive variability rather than causal invariants.
-This behavior aligns with our theoretical framework: only knowledge features with low class-conditional domain divergence are appropriate for $h_{\mathrm{K}}(x)$ in CCKI, while domain-unstable features increase the effective discrepancy term and weaken rare-class guarantees.
+This behavior aligns with our theoretical framework: only knowledge features with low class-conditional domain divergence are appropriate for $h_{\mathrm{K}}(x)$ in CCKR, while domain-unstable features increase the effective discrepancy term and weaken rare-class guarantees.
 Based on this ablation, we select \textbf{Gradient Boosting on lesion biomarkers only} as the canonical knowledge classifier $h_{\mathrm{K}}(x)$ used in our hypothesis pool.
-This choice provides stable, interpretable, and clinically grounded decision boundaries that integrate reliably with deep hypotheses $h_{\mathrm{D}}(x)$ in the CCKI rule cascade.
+This choice provides stable, interpretable, and clinically grounded decision boundaries that integrate reliably with deep hypotheses $h_{\mathrm{D}}(x)$ in the CCKR rule cascade.
 
 \begin{table}[!htbp]
 \centering
 \scriptsize
 \vspace{0.25em}
 \setlength{\tabcolsep}{3pt}
+\caption{\textbf{Ablation on symbolic lesion biomarkers with and without retinal vein features on APTOS.} Lesion-only features provide the strongest and most stable performance across models; adding vein morphology degrades accuracy and F1.}
 \begin{tabular}{l|c|c|c|c|c|c}
 \toprule
 \textbf{Model} & \textbf{Feature Set} & \textbf{Acc} & \textbf{F1} & \textbf{Prec} & \textbf{Rec} & \textbf{AUC} \\
@@ -1388,20 +1336,21 @@ Grad. Boost.  & Lesions + vein    & 0.7252 & 0.7389 & 0.51 & 0.44 & 0.69 \\
 KNN           & Lesions + vein    & 0.6987 & 0.6369 & 0.43 & 0.44 & 0.66 \\
 \bottomrule
 \end{tabular}
-\caption{\textbf{Ablation on symbolic lesion biomarkers with and without retinal vein features on APTOS.} Lesion-only features provide the strongest and most stable performance across models; adding vein morphology degrades accuracy and F1.}
+
 \label{tab:ablation_symbolic}
 \end{table}
 \vspace{-0.30 in}
-\paragraph{Ablation Study II: Effect of Hypothesis Pool Composition in CCKI.}
-We investigate how the composition of the CCKI hypothesis pool $\mathcal{H}$ influences in-domain performance on the APTOS dataset for 5-class Diabetic Retinopathy (DR) grading (Stages 0--4). The pool $\mathcal{H}$ consists of two distinct model types: 
+\paragraph{Ablation Study II: Effect of Hypothesis Pool Composition in CCKR.}
+We investigate how the composition of the CCKR hypothesis pool $\mathcal{H}$ influences in-domain performance on the APTOS dataset for 5-class Diabetic Retinopathy (DR) grading (Stages 0--4). The pool $\mathcal{H}$ consists of two distinct model types: 
 (i) \textit{Knowledge-guided hypotheses} $h_{K}(x)$, implemented via Gradient Boosting over a 10-dimensional clinical feature vector $\mathcal{K}$; and 
 (ii) \textit{Deep-learning hypotheses} $h_{D}(x)$, utilizing ViT-based image classifiers fine-tuned for DR grading. 
-While $\mathcal{K}$ remains fixed, we systematically vary the number of hypotheses and their prediction granularity (5-class vs.\ binary one-vs-rest). Table~\ref{tab:aptos_ccki_ablation} evaluates six configurations.
+While $\mathcal{K}$ remains fixed, we systematically vary the number of hypotheses and their prediction granularity (5-class vs.\ binary one-vs-rest). Table~\ref{tab:aptos_CCKR_ablation} evaluates six configurations.
 
 \begin{table}[h]
 \centering
 \scriptsize
 \setlength{\tabcolsep}{1pt}
+\caption{Ablation of CCKR hypothesis pool composition on APTOS (5-class DR classification).}
 \begin{tabular}{lccc}
 \toprule
 \textbf{Condition} &
@@ -1436,28 +1385,28 @@ $80.63 \pm 0.13$ \\
 
 \bottomrule
 \end{tabular}
-\caption{Ablation of CCKI hypothesis pool composition on APTOS (5-class DR classification).}
-\label{tab:aptos_ccki_ablation}
+
+\label{tab:aptos_CCKR_ablation}
 \end{table}
 \vspace{-10 pt}
 \paragraph{Discussion.}
 Condition A2 delivers the highest accuracy because the 5-class deep hypothesis provides holistic visual representation, while the five binary $h_{\mathrm{K}}(x)$ models contribute class-specific clinical cues that improve fine-grained discrimination.
-Large binary-only mixtures (A3, A4) perform worse due to overlapping or contradictory decision boundaries within the CCKI rule cascade.
-Single-family baselines (A5, A6) underperform as they lack complementary perspectives. \textbf{Limitations: }CCKI supports an unbounded number of hypotheses, but effective operation requires avoiding excessive redundancy when using one-vs-rest specialists.
+Large binary-only mixtures (A3, A4) perform worse due to overlapping or contradictory decision boundaries within the CCKR rule cascade.
+Single-family baselines (A5, A6) underperform as they lack complementary perspectives. \textbf{Limitations: }CCKR supports an unbounded number of hypotheses, but effective operation requires avoiding excessive redundancy when using one-vs-rest specialists.
 In this work, $|\mathcal{Y}| = 5$ (DR stages), so the binary hypotheses naturally map to five DR subclasses.
-Importantly, CCKI is \textit{not restricted to binary splits}: it can accommodate arbitrary sub-multiclass hypotheses (e.g., mild vs.\ severe tiers), which we identify as a promising direction for future work.
+Importantly, CCKR is \textit{not restricted to binary splits}: it can accommodate arbitrary sub-multiclass hypotheses (e.g., mild vs.\ severe tiers), which we identify as a promising direction for future work.
 
 \paragraph{Ablation III: Comparison with ensemble and mixture-of-experts baselines.}
 \label{app:kittler_moe}
-To verify that CCKI's gains are not explained by standard model-combination
+To verify that CCKR's gains are not explained by standard model-combination
 strategies, we compare against ensemble learning (averaging
 predictions of multiple independently trained classifiers) and
 mixture-of-experts (a learned gating network combining expert
 predictions). All methods use the same ViT backbone and training
 configuration. As shown in Table~\ref{tab:ensemble_ablation}, the
-traditional ensemble achieves 77.90\% accuracy and MoE 81.90\%, while CCKI
+traditional ensemble achieves 77.90\% accuracy and MoE 81.90\%, while CCKR
 reaches \textbf{84.78\%}. This indicates that structured neuro-symbolic
-reasoning within the CCKI cascade integrates complementary hypotheses more
+reasoning within the CCKR cascade integrates complementary hypotheses more
 effectively than generic ensembling or gating-based expert mixtures.
 
 \begin{table}[h]
@@ -1465,7 +1414,7 @@ effectively than generic ensembling or gating-based expert mixtures.
 \small
 \setlength{\tabcolsep}{6pt}
 \caption{\textbf{Comparison with model-combination strategies.} Structured
-CCKI outperforms standard ensemble learning and mixture-of-experts.}
+CCKR outperforms standard ensemble learning and mixture-of-experts.}
 \label{tab:ensemble_ablation}
 \begin{tabular}{lc}
 \toprule
@@ -1473,14 +1422,14 @@ CCKI outperforms standard ensemble learning and mixture-of-experts.}
 \midrule
 Ensemble Learning        & 77.90 \\
 Mixture of Experts (MoE) & 81.90 \\
-\textbf{CCKI (Ours)}     & \textbf{84.78} \\
+\textbf{CCKR (Ours)}     & \textbf{84.78} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \paragraph{Ablation I: EIG Design Choice}
 \label{app:eig_baselines}
-We evaluate whether EIG is necessary by keeping the CKI/CCKI pipeline unchanged and only swapping the criterion used to
+We evaluate whether EIG is necessary by keeping the CKI/CCKR pipeline unchanged and only swapping the criterion used to
 select knowledge cues / routing splits. All variants use the same backbone, same candidate pool, and same training/eval protocol.
 
 \paragraph{Baselines.}
@@ -1496,7 +1445,7 @@ select knowledge cues / routing splits. All variants use the same backbone, same
 \begin{table}[h]
 \centering
 \small
-\caption{Eig criterion ablation. We keep cki/ccki fixed and only replace the split/selection criterion.} 
+\caption{Eig criterion ablation. We keep cki/CCKR fixed and only replace the split/selection criterion.} 
 \label{tab:eig_ablation}
 \vspace{12pt} % One line space after the table title
 
@@ -1518,7 +1467,7 @@ CE-Gain (NLL)   & 81.2 & 68.9 & 44.5 & 39.7 & 0.15 & High variance \\
 Standard IG measures class-label uncertainty reduction, while CE-Gain directly optimizes probabilistic fit of the routed
 predictor. EIG differs in that it estimates the expected utility of a knowledge cue under the routing policy and is thus
 better aligned with selective expert usage; the ablation quantifies whether this alignment translates into improved
-target-domain tail robustness and/or more efficient routing (lower KL coverage for the same accuracy).
+target-domain tail robustness and/or more efficient routing as shown in table \ref{tab:eig_ablation} (lower KL coverage for the same accuracy).
 \newpage
 
 \newpage
@@ -1619,7 +1568,7 @@ Accuracy, Macro F1, Tail F1, and DG Gap.
 \subsection{LLM Agents: Model Specification, Prompt Templates, and Guardrails}
 \label{app:llm_details}
 
- \textbf{LLM backbone.} We use \textit{Gemini 2.5} as the single LLM backend for CRA/CDA/CGA across all experiments to control for model variance and isolate gains from agentic orchestration and CCKI.
+ \textbf{LLM backbone.} We use \textit{Gemini 2.5} as the single LLM backend for CRA/CDA/CGA across all experiments to control for model variance and isolate gains from agentic orchestration and CCKR.
 We choose Gemini 2.5 for its strong tool-use, long-context grounding, and reliable code generation, which are central to our retrieve--reason--execute pipeline.
 All baselines that require an LLM use the same Gemini 2.5 configuration for a fair comparison. Gemini~2.5 is a decoder-only Transformer with instruction tuning and RLHF, supporting long-context inference and structured tool calling.Importantly, our contributions are model-agnostic and do not rely on Gemini-specific capabilities.
 
@@ -1741,9 +1690,9 @@ clinical label, $X$ is the observed data (image or signal), $D$ is the
 domain (center, device, protocol), and $K$ denotes clinically motivated
 intermediate concepts (lesions, anatomy, physiological markers). We
 target features that are less sensitive to $D$ while remaining predictive
-of $Y$. ACD operationalizes this by producing and selecting
+of $Y$. R3A operationalizes this by producing and selecting
 \emph{class-conditional} knowledge features $K(X)$ and combining them
-with data-driven predictors via CCKI.
+with data-driven predictors via CCKR.
 
 \paragraph{No causal identification guarantee.}
 We do not claim to satisfy backdoor or frontdoor criteria, to identify
@@ -1805,9 +1754,9 @@ benchmarks report YOLO11 detection latency (TensorRT on an NVIDIA T4) of \{1.5, 
 therefore controlled by the selected YOLO11 variant, the image resolution, and the learned routing coverage $p_{\text{KL}}$,
 while the one-time agentic search overhead does not affect per-sample inference once the system is deployed.
 \subsection{Reproducibility and fair LLM usage.}
-We will release the full agentic orchestration code (CRA/CDA/CGA and the CCKI 
+We will release the full agentic orchestration code (CRA/CDA/CGA and the CCKR 
 cascade), all knowledge-feature extractors (lesion detectors, vessel routines, 
-ICA-derived rs-fMRI features, and ECG masking utilities), the CCKI decision logic 
+ICA-derived rs-fMRI features, and ECG masking utilities), the CCKR decision logic 
 (EIG computation, tie-breaking, Gini-based stopping, and depth limits), 
 de-identified dataset split files, and configuration files containing every 
 hyperparameter, random seed, and agent trajectory needed to reproduce the reported 
@@ -1815,7 +1764,7 @@ numbers. All runs use fixed seeds across Python, NumPy, PyTorch, CUDA, data-load
 shuffling, and augmentation RNG, with \texttt{cudnn.deterministic} enabled and 
 hardware/driver versions logged. To ensure that gains are attributable to our 
 method rather than to a stronger backend, every LLM-using baseline (RAG-only, 
-ReAct-style, static DAG/LangGraph pipelines, and ACD) is evaluated under an 
+ReAct-style, static DAG/LangGraph pipelines, and R3A) is evaluated under an 
 identical configuration: same provider and model identifier, context length, 
 tool-calling mode, decoding parameters (temperature, top-$p$, max tokens, stop 
 sequences), retrieval corpus, retriever type, chunking strategy, and top-$k$. 
@@ -1832,7 +1781,7 @@ is never treated as clinically deployable. Each generated module is executed
 inside a sandboxed container with restricted I/O, validated against unit tests 
 and metric assertions, and accompanied by provenance logs that trace every rule 
 and feature back to its source evidence ID; any use beyond research requires 
-human-in-the-loop review. We position ACD as a research framework that supports 
+human-in-the-loop review. We position R3A as a research framework that supports 
 clinicians rather than replacing clinical decision-making, and any real-world 
 deployment would require external validation, drift monitoring, and clinician 
 oversight.
@@ -1848,7 +1797,7 @@ oversight.
     \includegraphics[width=0.8\columnwidth]{soz.png}
     \caption{
     \textbf{DeepXSOZ: A Hybrid Knowledge-AI Architecture for Seizure Onset Zone (SOZ) Localization.}
-    The framework employs a bipartite training architecture. During inference, the final SOZ classification is determined by integrating the labels from both $\text{M}_{\text{DL}}$ and $\text{M}_{\text{CCKI}}$ via confidence scores, yielding a final, integrated, and explainable diagnostic result.
+    The framework employs a bipartite training architecture. During inference, the final SOZ classification is determined by integrating the labels from both $\text{M}_{\text{DL}}$ and $\text{M}_{\text{CCKR}}$ via confidence scores, yielding a final, integrated, and explainable diagnostic result.
     }
     \label{fig:deepxsoz_framework}
 \end{figure}
@@ -1860,7 +1809,7 @@ oversight.
     \caption{
     \textbf{Hierarchical Knowledge-AI Integration Framework for Diabetic Retinopathy (DR) Classification.}
     The system integrates a \textbf{Deep Learning Machine} ($M_d$, ViT backbone) and an \textbf{Expert Knowledge Machine} ($M_k$, clinical features/guidelines) within a decision tree.
-    The \textbf{CCKI algorithm} iteratively selects the optimal binary classifier (maximum Entropy Imbalance Gain, EIG) for node splitting.
+    The \textbf{CCKR algorithm} iteratively selects the optimal binary classifier (maximum Entropy Imbalance Gain, EIG) for node splitting.
     }
     \label{fig:dr_framework}
 \end{figure}
