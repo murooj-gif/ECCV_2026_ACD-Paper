@@ -80,24 +80,9 @@
 \begin{document}
 
 \maketitle
-
 \begin{abstract}
-Deep-learning models in clinical settings face two intertwined obstacles:
-\textbf{Domain Generalization (DG)} across heterogeneous acquisition protocols,
-and \textbf{Long-Tailed Visual Recognition (LT-VR)} on highly skewed disease
-populations. We formally show that the gradient-alignment objective favored by
-DG conflicts with the class-aware optimization required for LT-VR, producing a
-smoothness--sharpness trade-off that degrades both. To resolve this, we
-introduce the \textbf{Retrieve–Reason–Run Agent (R3A)} framework. This modular architecture integrates explicit clinical knowledge sourced
-autonomously from sonographers, radiologists, and specialists as a causal
-intervention. R3A orchestrates three agents (Clinical knowledge retrieval, Reasoning on Causal
-Disentanglement, Code Generation) and routes predictions through a
-class-conditional cascade rather than concatenating features. Across
-\textbf{10 medical-imaging datasets spanning 4 modalities}, R3A yields an
-average \textbf{10.3\% improvement} over DG and LT-VR baselines on
-multi-domain and in-domain long-tailed tasks.
+Deep learning models deployed in real-world settings must generalize across heterogeneous domains while remaining reliable on rare and underrepresented classes. However, domain generalization and long-tailed recognition are inherently conflicting objectives: domain-invariant learning favors smooth shared representations, whereas rare-class learning requires highly discriminative boundaries. This challenge is particularly critical in clinical applications, where clinically important conditions remain consistently rare across institutions, imaging devices, and patient populations. We propose \textbf{Retrieve--Reason--Run Agents (R3A)}, a knowledge-guided agentic framework that jointly addresses domain shift and long-tailed imbalance through Class-Conditional Knowledge Routing (CCKR). Instead of conventional feature concatenation, CCKR dynamically routes predictions between knowledge-guided and data-driven models using class-conditional decision cascades. R3A employs coordinated agents to retrieve expert knowledge, reason over causal priors, and automatically construct executable learning pipelines.We evaluate R3A across 10 datasets spanning four clinical applications and modalities, including diabetic retinopathy grading, seizure onset zone localization, echocardiographic cardiac-function assessment, and coronary artery disease detection from ECG. Across in-domain, single-domain, and multi-domain generalization settings, R3A consistently improves rare-class recognition and cross-domain robustness, achieving average gains of 6.6\% in-domain, 6.1\% out-of-domain, and 13.1\% rare-class F1 over strong DG and long-tail baselines. In addition, the framework reduces reliance on extensive expert annotations by autonomously constructing clinically informed pipelines.
 \end{abstract}
-
 \section{Introduction}
 \label{sec:intro}
 
@@ -382,7 +367,7 @@ benchmarks~\cite{Yang22, Su24a, Tang25, FRoundation25}.
 
 \begin{figure}[t]
     \centering
-    \includegraphics[width=0.99\linewidth]{final-pipeline-1.png}
+    \includegraphics[width=0.99\linewidth]{final-pipeline-1.jpg}
     \caption{\textbf{Overview of the Retrieve–Reason–Run Agent (R3A)
     Framework with Class-Conditional Knowledge Routing (CCKR).}
     Three coordinated agents: (1) a Clinical Reasoning Agent retrieves
