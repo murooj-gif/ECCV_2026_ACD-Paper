@@ -6,9 +6,6 @@
 % For arXiv preprint, swap to: \usepackage[preprint]{neurips_2026}
 \usepackage{neurips_2026}
 
-%                      
-\documentclass{article}
-\usepackage{neurips_2026}
 
 % Math
 \usepackage{amsfonts}
@@ -669,11 +666,7 @@ suitability.
 For each refined rule $r_i \in \mathcal{R}$, the agent synthesizes Python
 programs using OpenCV, PyTorch, and standard detection/segmentation
 libraries (YOLO, SAM, Detectron, U-Net, etc.) to produce a set of
-extraction routines
-\[
-\mathcal{C} = \{c_1, c_2, \dots, c_p\},
-\]
-each computing a subset of $\mathcal{K}$. Automated input checks, unit
+extraction routines $\mathcal{C} = \{c_1, c_2, \dots, c_p\}$ each computing a subset of $\mathcal{K}$. Automated input checks, unit
 tests, and fallback operations are injected. When a program fails, a
 reinforcement-driven refinement loop re-prompts the LLM until correctness
 constraints are met. The agent does not blindly trust LLM-produced rules:
@@ -682,14 +675,10 @@ measurable gain over the deep-learning-only baseline, discarding
 non-improving candidates. The final CCKR cascade therefore uses only
 validated knowledge branches and otherwise defaults to deep experts; this
 is demonstrated in the ablation of Section~\ref{ablation_study1}.
+\vspace{-1.5 pt}
 \section{Experiments}
+We evaluate R3A across four clinically critical applications spanning neuroimaging, ophthalmology, cardiology, and electrophysiology. For each application, we select benchmark datasets exhibiting long-tailed class distributions with clinically rare but critical categories (details in Table~\ref{table3}). These settings are intentionally chosen to stress-test rare-class recognition under real-world imbalance and distribution shift.  Across all tasks, inputs are inherently multimodal, and R3A demonstrates consistent adaptability to heterogeneous data modalities, datasets, and application-specific constraints. The framework autonomously constructs and refines pipelines by integrating prior literature, task-specific knowledge, and tool-augmented reasoning, enabling robust performance under both domain generalization and out-of-domain generalization settings. 
 
-
-\label{sec:experiments}
-
-We evaluate R3A across four clinically critical applications spanning
-neuroimaging, ophthalmology, cardiology, and electrophysiology. Detailed
-pipelines, prompts, and implementation are in the supplementary material. For each application, we choose datasets that have a rare class, making the dataset long tailed as described in table
 
 \subsection{Application 1: Diabetic Retinopathy Grading}
 
@@ -750,6 +739,7 @@ Rare stage evaluation (MDG-Rare) focuses on class-specific F1-scores for Stage 3
 \bottomrule
 \end{tabular}
 \end{table*}
+
 \begin{table*}[h]
 \centering
 \footnotesize
@@ -767,6 +757,7 @@ c        % Base
 c        % Gain
 p{1.8cm} % Rare Class (Slightly reduced to balance total width)
 }
+\label{table3}
 \toprule
 \textbf{Task} & \textbf{Modality} & \textbf{Dataset} & \textbf{R3A} & \textbf{Baseline} & \textbf{Base} & \textbf{Gain} & \textbf{Rare Class} \\
 \midrule
@@ -811,34 +802,35 @@ Cardiac Function Assessment
 \end{tabular}
 \label{tab:R3A_results}
 \end{table*}
+
+
 \begin{table*}[h]
 \centering
 \scriptsize
 \setlength{\tabcolsep}{4pt}
-\renewcommand{\arraystretch}{1.25} % Elegant vertical spacing
-
+\renewcommand{\arraystretch}{1.25}
 \caption{\footnotesize \textbf{Cross-Application Performance and Generalization Gains.} 
 Summary of performance improvements using our R3A framework across four medical domains. 
 ID (In-Domain) Gain represents improvement over the baseline on the training distribution. 
 OOD (Out-of-Domain) Gain represents improvement over baseline on unseen target domains (Cross-Center/Cross-Dataset).}
 \label{tab:cross_app_summary}
 
-\begin{tabular}{lp{2.5cm}p{2.5cm}ccc}
+\begin{tabular}{lp{2.5cm}p{2.5cm}cccc}
 \toprule
-\textbf{Application} & \textbf{Source Domain} & \textbf{Target Domain} & \textbf{Baseline} & \textbf{ID Gain} & \textbf{OOD Gain} \\
+\textbf{Application} & \textbf{Source Domain} & \textbf{Target Domain} & \textbf{Baseline} & \textbf{ID Gain} & \textbf{OOD Gain} & \textbf{F1 OOD Gain} \\
 \midrule
 
-\textit{DR Grading} & APTOS / Messidor & EyePACS / IDRiD & 78.4\% & $+6.90\%$ & $+4.52\%$ \\
+\textit{DR Grading} & APTOS / Messidor1/Messidor2 & EyePACS  & 78.4\% & $+6.90\%$ & $+4.52\%$ & $+14.8\%$ \\
 
-\textit{SOZ Localization} & PCH (rs-fMRI) & UNC (rs-fMRI) & 46.1\% & $+38.50\%$ & $+27.65\%$ \\
+\textit{SOZ Localization} & PCH (rs-fMRI) & UNC (rs-fMRI) & 46.1\% & $+8.50\%$ & $+7.65\%$ & $+18.9\%$ \\
 
-\textit{Cardiac Function} & EchoNet (Baseline) & EchoNet (Val) & 4.1 (MAE) & $-0.03\%$ & -- \\
+\textit{Cardiac Function} & EchoNet (Train) & EchoNet (Val) & 4.10 (MAE) & $-0.30\%$ & -- & $+6.2\%$ \\
 
-\textit{CAD Detection} & MISC ECG (Train) & MISC ECG (Test) & 82.0 (AUC) & $+11.20\%$ & -- \\
+\textit{CAD Detection} & MISC Center 1  (Train) & MISC Center 2 (Test) & 82.0 (AUC) & $+11.20\%$ & -- & $+12.7\%$ \\
 
 \midrule
-\rowcolor[gray]{0.95} 
-\textbf{Average Improvement} & -- & -- & -- & \textbf{+14.14\%} & \textbf{+16.09\%} \\
+\rowcolor[gray]{0.95}
+\textbf{Average Improvement} & -- & -- & -- & \textbf{+6.57\%} & \textbf{+6.09\%} & \textbf{+13.15\%} \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -925,7 +917,7 @@ into computable biomarkers and causal factors, and (iii) validates the
 resulting pipelines before integration with deep predictors. Across four
 clinical applications and ten datasets, R3A consistently improves
 cross-domain and rare-class recognition while reducing manual annotation
-burden.
+burden as shown in Table~\ref{table4}. 
 
 %                      
 % Bibliography. NeurIPS 2026 loads natbib by default.
