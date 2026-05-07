@@ -332,7 +332,6 @@ accuracy.
 The intuitive solution seeks $h \in \mathcal{H}$ minimizing the expected
 target risk under unseen target distributions $P_T \neq P_S$.
 \begin{equation}
-\label{eqn:riskLevel}
 \mathcal{R}_T(h) = \mathop{\mathbb{E}}\limits_{(\mathbf{x},y)\sim P_T}[\ell(h(\mathbf{x}),y)],
 \end{equation}
 
@@ -425,7 +424,6 @@ $\pi_{j,t}(x) \in [0,1]$ denote a purity/confidence score of $h_{i_t}$ for
 $y_j$, and let $\theta_j$ be a class-specific threshold. The
 \emph{first-conclusive-step gate} is
 \begin{equation}
-\label{eqn:CCKRI}
 \psi_{j,t}(x) = \mathbb{I}\!\left(\alpha_{j,t}(x)=1 \;\wedge\; \pi_{j,t}(x) \ge \theta_j\right)
 \cdot \prod_{s=1}^{t-1} \mathbb{I}\!\left(\pi_{j,s}(x) < \theta_j\right).
 \end{equation}
@@ -515,7 +513,6 @@ Define the \emph{tail-weighted entropy per class} as
 w(y)
 &= \frac{1}{\big(p_{\Omega}(y)+\epsilon\big)^{\gamma}}.
 \end{aligned}
-\label{eq:theta_def}
 \end{equation}
 
 where $\gamma\ge 0$ emphasizes rare classes and $\epsilon>0$ avoids numerical issues.
@@ -524,7 +521,6 @@ Let the \emph{entropy-imbalance deviation} be
 \eta(\Omega)
 \;=\;
 \max_{y\in\mathcal{Y}}\theta_{\Omega}(y)\;-\;\frac{1}{|\mathcal{Y}|}\sum_{y\in\mathcal{Y}}\theta_{\Omega}(y).
-\label{eq:eta_def}
 \end{equation}
 For a hypothesis $h$ producing a partition $S_h(\Omega)=\{\Omega^{(k)}\}_{k=1}^{K}$, define the post-split deviation as the
 branch-size-weighted average
@@ -532,7 +528,6 @@ branch-size-weighted average
 \eta_h(\Omega)
 \;=\;
 \sum_{k=1}^{K}\frac{|\Omega^{(k)}|}{|\Omega|}\,\eta\!\big(\Omega^{(k)}\big).
-\label{eq:eta_h_def}
 \end{equation}
 We then define the \textbf{Entropy Imbalance Gain} as
 \begin{equation}
@@ -549,7 +544,6 @@ that improve tail uncertainty rather than optimizing only head-dominated average
 Given the selected $h^*$, we choose the branch $s$ to recurse on as the branch that is most enriched in $y_r$:
 \begin{equation}
 s \;=\; \arg\max_{\Omega^{(k)}\in S_{h^*}(\Omega)} \frac{1}{|\Omega^{(k)}|}\sum_{(x,y)\in\Omega^{(k)}}\mathbb{I}[y=y_r].
-\label{eq:rare_branch}
 \end{equation}
 We quantify purity of the selected branch using Gini impurity
 $\mathrm{Gini}(s)=1-\sum_{y\in\mathcal{Y}}p_s(y)^2$ with $p_s(y)$ estimated empirically.
@@ -563,7 +557,6 @@ In ties, we use a validation-calibrated \emph{dependability} score on the rare l
 \mathrm{Dep}(h;\Omega)
 \;=\;
 \frac{1}{|\Omega|}\sum_{(x,y)\in\Omega} p_h(y_r\mid x),
-\label{eq:dep_def}
 \end{equation}
 and choose the tied hypothesis with the largest $\mathrm{Dep}(h;\Omega)$, requiring it to exceed $d_{th}$; otherwise we fall back to
 the maximum-EIG hypothesis.
@@ -663,7 +656,7 @@ validated knowledge branches and otherwise defaults to deep experts; this
 is demonstrated in the ablation of Section~\ref{ablation_study1}.
 \vspace{-1.5 pt}
 \section{Experiments}
-We evaluate R3A across four clinically critical applications spanning neuroimaging, ophthalmology, cardiology, and electrophysiology. For each application, we select benchmark datasets exhibiting long-tailed class distributions with clinically rare but critical categories (details in Table~\ref{table3}). These settings are intentionally chosen to stress-test rare-class recognition under real-world imbalance and distribution shift.  Across all tasks, inputs are inherently multimodal, and R3A demonstrates consistent adaptability to heterogeneous data modalities, datasets, and application-specific constraints. The framework autonomously constructs and refines pipelines by integrating prior literature, task-specific knowledge, and tool-augmented reasoning, enabling robust performance under both domain generalization and out-of-domain generalization settings. 
+We evaluate R3A across four clinically critical applications spanning neuroimaging, ophthalmology, cardiology, and electrophysiology. For each application, we select benchmark datasets exhibiting long-tailed class distributions with clinically rare but critical categories (details in Table~\ref{table3}). These settings are intentionally chosen to stress-test rare-class recognition under real-world imbalance and distribution shift.  Across all tasks, inputs are inherently multimodal, and R3A demonstrates consistent adaptability to heterogeneous data modalities, datasets, and application-specific constraints. The framework autonomously constructs and refines pipelines by integrating prior literature, task-specific knowledge, and tool-augmented reasoning, enabling robust performance under both domain generalization and out-of-domain generalization settings. Cross-application ID and OOD performance gains are reported in Table~\ref{tab:cross_app_summary}.
 
 
 \subsection{Application 1: Diabetic Retinopathy Grading}
@@ -788,7 +781,6 @@ Cardiac Function Assessment
 \\
 \bottomrule
 \end{tabular}
-\label{tab:R3A_results}
 \end{table*}
 
 
@@ -1049,7 +1041,6 @@ common failure mode under domain shift and for tail classes.
 \label{fig3}   
     % This command allows a caption without needing a \begin{figure}
     \captionof{figure}{Comparison of ensemble paradigms: while prior methods (Boosting, Bagging, MoE) lack holistic imbalance awareness, CCKR uniquely integrates representation-aware selection and class-specific routing for robust imbalanced learning.}
-    \label{fig:Lorenz}
 \end{center}
 \vspace{-0.05in} % Spacing below
  
@@ -1141,7 +1132,7 @@ Lead-selection masking (top-$k$ leads); MET-level one-hot encoding concatenated 
 \vspace{-8pt}
 \end{wrapfigure}
 \paragraph{Knowledge Extraction.}
-We construct a clinically grounded knowledge base by extracting structured symptom-level rules from ophthalmology literature and diagnostic guidelines. Each diabetic retinopathy (DR) stage is characterized using observable retinal biomarkers such as microaneurysms, haemorrhages, exudates, and neovascularization (Figure \ref{fig:dr_stages}), along with severity thresholds and progression risks. These features are mapped to diagnostic criteria (e.g., $>20$ haemorrhages per quadrant for Severe NPDR) and encoded into a symbolic representation capturing causal relationships between visual patterns and disease stages. This knowledge layer enables integration with deep models, improving interpretability, robustness, and rare-class generalization.
+We construct a clinically grounded knowledge base by extracting structured symptom-level rules from ophthalmology literature and diagnostic guidelines. Each diabetic retinopathy (DR) stage is characterized using observable retinal biomarkers such as microaneurysms, haemorrhages, exudates, and neovascularization (Figure \ref{fig:dr_stages}), along with severity thresholds and progression risks. These features are mapped to diagnostic criteria (e.g., $>20$ haemorrhages per quadrant for Severe NPDR; see Table~\ref{tab:dr_symptoms}) and encoded into a symbolic representation capturing causal relationships between visual patterns and disease stages. This knowledge layer enables integration with deep models, improving interpretability, robustness, and rare-class generalization.
 \begin{wraptable}{r}{0.63\textwidth}
 \vspace{-0.25in}
 \centering
@@ -1509,7 +1500,7 @@ distributions, and center-wise splits for train/validation/test are reported in 
 
 
 \paragraph{Domain shift magnitude reporting.}
-We report quantitative shift measures for each source–target pair using KL divergence, JS divergence, Hellinger distance, total variation (TV), and Wasserstein-1 distance (W1). Overall, shifts between APTOS and EyePACS are relatively low, indicating similar data distributions, while shifts involving Messidor-1 tend to be higher, particularly for KL and W1, reflecting more substantial distributional differences. Messidor-2 generally exhibits smaller shifts relative to APTOS and EyePACS but moderate shifts when compared to Messidor-1. These metrics highlight the asymmetric nature of domain shifts across DR datasets, which is important for assessing model generalization across sources and targets.
+We report quantitative shift measures for each source–target pair using KL divergence, JS divergence, Hellinger distance, total variation (TV), and Wasserstein-1 distance (W1). Overall, shifts between APTOS and EyePACS are relatively low, indicating similar data distributions, while shifts involving Messidor-1 tend to be higher, particularly for KL and W1, reflecting more substantial distributional differences. Messidor-2 generally exhibits smaller shifts relative to APTOS and EyePACS but moderate shifts when compared to Messidor-1. These metrics highlight the asymmetric nature of domain shifts across DR datasets, which is important for assessing model generalization across sources and targets (Table~\ref{tab:domain_shift}).
 \begin{table}[htbp]
 \scriptsize
 \centering
