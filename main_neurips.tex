@@ -624,7 +624,7 @@ Agent (CGA)}.
 
 We now detail the first stages of R3A: acquiring symbolic knowledge,
 encoding it into features and rules, and preparing it for use in CCKR
-hypotheses $h_K(x)$ as illustrated in figure\label{medxai_framework2}.
+hypotheses $h_K(x)$ as illustrated in Figure~\ref{medxai_framework2}.
 
 \textbf{Agent~1 (CRA-A): Medical Knowledge Retrieval.}
 A PubMed-based Retrieval-Augmented Generation system extracts diagnostic
@@ -747,6 +747,7 @@ Rare stage evaluation (MDG-Rare) focuses on class-specific F1-scores for Stage 3
 \scriptsize
 \renewcommand{\arraystretch}{1.05}
 \caption{Comparison of R3A with task-specific baselines across modalities. Rare classes denote clinically critical underrepresented conditions.}
+\label{table3}
 \begin{tabular}{
 p{2.2cm} % Task
 p{2.6cm} % Modality (Increased from 1.5cm)
@@ -757,7 +758,6 @@ c        % Base
 c        % Gain
 p{1.8cm} % Rare Class (Slightly reduced to balance total width)
 }
-\label{table3}
 \toprule
 \textbf{Task} & \textbf{Modality} & \textbf{Dataset} & \textbf{R3A} & \textbf{Baseline} & \textbf{Base} & \textbf{Gain} & \textbf{Rare Class} \\
 \midrule
@@ -917,7 +917,7 @@ into computable biomarkers and causal factors, and (iii) validates the
 resulting pipelines before integration with deep predictors. Across four
 clinical applications and ten datasets, R3A consistently improves
 cross-domain and rare-class recognition while reducing manual annotation
-burden as shown in Table~\ref{table4}. 
+burden as shown in Table~\ref{table3}. 
 
 %                      
 % Bibliography. NeurIPS 2026 loads natbib by default.
@@ -1088,7 +1088,7 @@ best interpreted as an \emph{expert-routing tree/cascade} rather than a
 conventional feature-only decision tree as shown in figure \ref{fig3}.   
 \section{Application Details}
 \label{app:applications}
-\paragraph{Task-Wise Agent Action Decomposition Across Clinical Domains:} Table~\ref{tab:R3A_agent_grounding_summary} summarizes how \texttit{R3A} integrates retrieval, reasoning, and execution across diverse clinical domains by grounding predictions in domain-specific medical knowledge. Each application encodes structured priors and task-relevant constraints, enabling robust handling of class imbalance, rare cases, and modality-specific variability. This unified agentic design ensures consistent knowledge-guided inference while adapting to heterogeneous data sources and clinical objectives.
+\paragraph{Task-Wise Agent Action Decomposition Across Clinical Domains:} Table~\ref{tab:R3A_agent_grounding_summary} summarizes how \textit{R3A} integrates retrieval, reasoning, and execution across diverse clinical domains by grounding predictions in domain-specific medical knowledge. Each application encodes structured priors and task-relevant constraints, enabling robust handling of class imbalance, rare cases, and modality-specific variability. This unified agentic design ensures consistent knowledge-guided inference while adapting to heterogeneous data sources and clinical objectives.
 \begin{table*}[h]
 \centering
 \scriptsize
@@ -1389,7 +1389,6 @@ In this work, $|\mathcal{Y}| = 5$ (DR stages), so the binary hypotheses naturall
 Importantly, CCKR is \textit{not restricted to binary splits}: it can accommodate arbitrary sub-multiclass hypotheses (e.g., mild vs.\ severe tiers), which we identify as a promising direction for future work.
 
 \paragraph{Ablation III: Comparison with ensemble and mixture-of-experts baselines.}
-\label{app:kittler_moe}
 To verify that CCKR's gains are not explained by standard model-combination
 strategies, we compare against ensemble learning (averaging
 predictions of multiple independently trained classifiers) and
