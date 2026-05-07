@@ -94,7 +94,7 @@ intervention. R3A orchestrates three agents (Clinical knowledge retrieval, Reaso
 Disentanglement, Code Generation) and routes predictions through a
 class-conditional cascade rather than concatenating features. Across
 \textbf{10 medical-imaging datasets spanning 4 modalities}, R3A yields an
-average \textbf{10.3\% improvement} over DG and LT baselines on
+average \textbf{10.3\% improvement} over DG and LT-VR baselines on
 multi-domain and in-domain long-tailed tasks.
 \end{abstract}
 
@@ -120,7 +120,7 @@ often critical (tail) pathologies are sparsely represented~\cite{CXR24}.
 Models trained on such data overfit head classes and catastrophically
 misclassify tail diseases.
 
-Although DG and LT-VR have been extensively studied in isolation, they coexist in real-world medical settings. Existing DG methods typically report improvements in macro-level accuracy and cross-domain performance; however, they often fail to preserve performance on rare classes under domain shift, as demonstrated in Table\ref{tab:perclass_f1}. For example, in Diabetic Retinopathy grading, which involves five classes where the fourth class (Proliferative DR) is rare, training a ViT-based SOTA ERM model on the APTOS dataset and evaluating on a different domain, such as MESSIDOR leads to a drop in overall accuracy. While introducing a DG-enhanced ViT variant \cite{Galappaththige2024} improves in-domain and cross-domain macro performance, the accuracy on the rare class degrades in both settings, despite using the same underlying architecture. Such behavior is unacceptable in high-stakes applications such as autonomous driving, clinical diagnosis, and drone perception, where improvements must be consistent across both frequent and rare classes. (The detailed experimental setup is provided in the appendix 
+Although DG and LT-VR have been extensively studied in isolation, they coexist in real-world medical settings. Existing DG methods typically report improvements in macro-level accuracy and cross-domain performance; however, they often fail to preserve performance on rare classes under domain shift, as demonstrated in Table\ref{tab:perclass_f1}. For example, in diabetic retinopathy (DR) grading, which involves five classes where the fourth class (Proliferative DR) is rare, training a Vision Transformer (ViT)-based state-of-the-art empirical risk minimization (ERM) model on the APTOS dataset and evaluating on a different domain, such as MESSIDOR, leads to a drop in overall accuracy. While introducing a DG-enhanced ViT variant \cite{Galappaththige2024} improves in-domain and cross-domain macro performance, the accuracy on the rare class degrades in both settings, despite using the same underlying architecture. Such behavior is unacceptable in high-stakes applications such as autonomous driving, clinical diagnosis, and drone perception, where improvements must be consistent across both frequent and rare classes. (The detailed experimental setup is provided in the appendix 
 
 \ref{table1}.)
 \begin{wraptable}{r}{0.575\textwidth}
@@ -202,7 +202,7 @@ G3 Severe
 
 \vspace{-0.15in}
 \end{wraptable}
-Recent work on \textbf{Multi-Domain Long-Tailed (MDLT) Recognition}~\cite{Yang22} attempts to jointly address DG and LT-VR; however, it assumes that long-tailed distributions exist in some domains but not others, allowing the model to implicitly learn tail classes across multiple domains. This assumption does not hold in real-world scenarios, where rare classes remain consistently rare across all domains. For instance, proliferative diabetic retinopathy and pancreatic cancer remain rare irrespective of the dataset or clinical setting. Within DG-LT, a fundamental optimization
+Recent work on \textbf{Multi-Domain Long-Tailed (MDLT) Recognition}~\cite{Yang22} attempts to jointly address DG and LT-VR; however, it assumes that long-tailed distributions exist in some domains but not others, allowing the model to implicitly learn tail classes across multiple domains. This assumption does not hold in real-world scenarios, where rare classes remain consistently rare across all domains. For instance, proliferative diabetic retinopathy and pancreatic cancer remain rare irrespective of the dataset or clinical setting. Within this joint DG and LT-VR setting, a fundamental optimization
 conflict therefore emerges: DG objectives favor \emph{broad, smooth minima}
 that promote domain invariance~\cite{Su24, Su24a}, while LT-VR objectives
 enforce \emph{sharp, discriminative minima} for minority-class
@@ -243,7 +243,7 @@ banerjee2023automated, kamboj2024expert, kamboj2024expertTAI}.
 
 
 \textbf{Contributions.} We formalize and prove that class-conditional
-knowledge integration (CCKR) has a higher likelihood of achieving better
+Class-Conditional Knowledge Routing (CCKR) has a higher likelihood of achieving better
 performance than concatenation in long-tailed domain generalization settings using knowledge-based expert machines.
 Building on this theory we propose the \textbf{Retrieve–Reason–Run Agent
 (R3A)} framework, which builds knowledge-guided deep-learning decision trees
@@ -254,7 +254,7 @@ Through an agentic, reinforcement-driven pipeline, R3A iteratively refines
 feature detectors and aligns learned representations with domain-invariant
 causal cues. Experiments on 10 medical-imaging datasets across four
 modalities show that R3A consistently outperforms state-of-the-art DG and
-LT baselines and reduces manual annotation burden.
+LT-VR baselines and reduces manual annotation burden.
 
 \section{Related Work}
 \label{sec:relWorks}
@@ -322,7 +322,7 @@ This dual-space paradigm is realized by the proposed \textbf{CCKR
 algorithm} (Alg.~\ref{alg:CCKR}, Fig.~\ref{fig:medxai_framework}), which
 integrates visual features from raw data with knowledge features from
 structured priors. CCKR builds a class-conditional classifier guided by
-\textbf{Expected Information Gain (EIG)} and a \textbf{purity index} for
+\textbf{Entropy Imbalance Gain (EIG)} and a \textbf{purity index} for
 tree-based partitioning over both spaces. Empirically, CCKR outperforms
 state-of-the-art baselines on in-domain, single-domain, and multi-domain
 generalization, improving rare-class prediction while maintaining overall
@@ -366,7 +366,7 @@ the loss-Hessian spectral norm
 \begin{equation}
 \mathcal{R}_{DG} = \mathbb{E}_{\mathbf{x}}\|\nabla^2_{\theta}\ell(h_{\theta}(\mathbf{x}))\|_2^2,
 \end{equation}
-while LT weighting magnifies rare-class gradients, emphasizing
+while long-tail (LT) weighting magnifies rare-class gradients, emphasizing
 \emph{sharp minima}
 \begin{equation}
 \mathcal{R}_{LT} = \sum_{c=1}^K w_c\, \mathbb{E}_{(\mathbf{x},y)\in S_c}\ell(h_{\theta}(\mathbf{x}), y),
@@ -390,7 +390,7 @@ benchmarks~\cite{Yang22, Su24a, Tang25, FRoundation25}.
     Disentanglement Agent plans feature extraction and model selection under
     data and resource constraints; (3) a Code Generation Agent implements
     executable pipelines. The CCKR algorithm iteratively selects classifiers
-    using expected information gain (EIG) to isolate rare classes via
+    using entropy imbalance gain (EIG) to isolate rare classes via
     recursive partitioning.}
     \label{medxai_framework2}
 \end{figure}
@@ -592,7 +592,7 @@ scalability. We address this by developing the R3A framework, which autonomously
 pipelines, retrieves domain-specific cues, and organizes them into
 structured priors for CCKR, reducing manual involvement.
 
-\section{Proposed Method: Retrieve–Reason–Run Agentic framework (R3A)}
+\section{Proposed Method: Retrieve–Reason–Run Agentic Framework (R3A)}
 \label{sec:method}
 
 R3A is a modular agentic pipeline that unifies expert medical knowledge
@@ -612,7 +612,7 @@ We now detail the first stages of R3A: acquiring symbolic knowledge,
 encoding it into features and rules, and preparing it for use in CCKR
 hypotheses $h_K(x)$ as illustrated in Figure~\ref{medxai_framework2}.
 
-\textbf{Agent~1 (CRA-A): Medical Knowledge Retrieval.}
+\textbf{Agent~1 (CRA): Medical Knowledge Retrieval.}
 A PubMed-based Retrieval-Augmented Generation system extracts diagnostic
 criteria, lesion patterns, imaging biomarkers, and evidence-based decision
 rules. For diabetic retinopathy, knowledge for each of the five DR stages
@@ -625,7 +625,7 @@ where each $k_i$ corresponds to a measurable attribute such as
 $\mathcal{K}$ to retain only features that can be reliably computed from
 available data.
 
-\textbf{Agent~2 (CRA-B): Rule Refinement.}
+\textbf{CRA: Rule Refinement.}
 Textual diagnostic criteria for the retained features $\mathcal{K}$ are
 converted into executable symbolic rules. This step adapts the knowledge to
 imaging and dataset constraints by defining (1) threshold ranges,
@@ -638,7 +638,7 @@ specifies how features in $\mathcal{K}$ should be computed and interpreted.
 $\mathcal{R}$ is finalized based on input quality, robustness of feature
 extraction, and computational resources.
 
-\textbf{Agent~3 (CDA): Architecture Selection.}
+\textbf{Agent~2 (CDA): Architecture Selection.}
 Given the target modality and disease, the LLM scans recent publications
 and GitHub repositories to identify suitable open-source models. It
 proposes modality-specific architectures (\eg, ViT, CNN, transformer
@@ -648,7 +648,7 @@ agent also selects $h_K(x)$ classifiers based on $\mathcal{R}$, weighting
 code availability, reported performance, computational cost, and
 suitability.
 
-\textbf{Agent~4 (CGA): Code Generation.}
+\textbf{Agent~3 (CGA): Code Generation.}
 For each refined rule $r_i \in \mathcal{R}$, the agent synthesizes Python
 programs using OpenCV, PyTorch, and standard detection/segmentation
 libraries (YOLO, SAM, Detectron, U-Net, etc.) to produce a set of
@@ -694,7 +694,8 @@ improves cross-domain accuracy over the ViT-only branch and DG baselines
 \caption{\footnotesize \textbf{Generalization Performance across Multi-Domain Protocols.} 
 Performance comparison of our Knowledge-Guided Fusion (R3A) against standard ViT and state-of-the-art DG baselines. 
 Targets are defined as the union of all available domains excluding the source. 
-Rare stage evaluation (MDG-Rare) focuses on class-specific F1-scores for Stage 3 (Severe) and Stage 4 (Proliferative) DR.}
+Rare stage evaluation (MDG-Rare) focuses on class-specific F1-scores for Stage 3 (Severe) and Stage 4 (Proliferative) DR.
+Abbreviations: E = EyePACS, M1 = Messidor-1, M2 = Messidor-2.}
 \label{tab:dr_all_results}
 
 \begin{tabular}{ll p{3.2cm} l l c}
@@ -732,7 +733,8 @@ Rare stage evaluation (MDG-Rare) focuses on class-specific F1-scores for Stage 3
 \setlength{\tabcolsep}{4pt} % Slightly increased padding for readability
 \scriptsize
 \renewcommand{\arraystretch}{1.05}
-\caption{Comparison of R3A with task-specific baselines across modalities. Rare classes denote clinically critical underrepresented conditions.}
+\caption{Comparison of R3A with task-specific baselines across modalities. Rare classes denote clinically critical underrepresented conditions.
+Abbreviations: SOZ = seizure onset zone; rs-fMRI = resting-state fMRI; EF = ejection fraction.}
 \label{table3}
 \begin{tabular}{
 p{2.2cm} % Task
@@ -798,7 +800,9 @@ Cardiac Function Assessment
 \caption{\footnotesize \textbf{Cross-Application Performance and Generalization Gains.} 
 Summary of performance improvements using our R3A framework across four medical domains. 
 ID (In-Domain) Gain represents improvement over the baseline on the training distribution. 
-OOD (Out-of-Domain) Gain represents improvement over baseline on unseen target domains (Cross-Center/Cross-Dataset).}
+OOD (Out-of-Domain) Gain represents improvement over baseline on unseen target domains (Cross-Center/Cross-Dataset).
+Metric abbreviations: MAE = mean absolute error; AUC = area under the curve.
+Institution abbreviations: PCH = Phoenix Children's Hospital; UNC = University of North Carolina.}
 \label{tab:cross_app_summary}
 
 \begin{tabular}{lp{2.5cm}p{2.5cm}cccc}
@@ -823,10 +827,10 @@ OOD (Out-of-Domain) Gain represents improvement over baseline on unseen target d
 \subsection{Application 2: Seizure Onset Zone Localization}
 
 \paragraph{Setup.}
-For SOZ localization from rs-fMRI, Independent Components (ICs) are first
+For SOZ localization from resting-state fMRI (rs-fMRI), Independent Components (ICs) are first
 extracted via Independent Component Analysis, set up by the CRA, which
 also encodes neurophysiological priors into a compact knowledge feature
-set (K-NumC, K-ThruV, K-SparseA, K-SparseF). The CGA implements the
+set (K-NumC, K-ThruV, K-SparseA, K-SparseF; encoding cluster count, ventricular extension, activelet sparsity, and dominant BOLD frequency, respectively). The CGA implements the
 extraction pipelines and a 2D CNN branch that classifies noise vs.
 non-noise ICs. The CDA constructs a CCKR decision tree over $h_K(x)$ and
 $h_D(x)$ by ranking hypotheses with Entropy Imbalance Gain (EIG). Under
@@ -1033,7 +1037,7 @@ expert ($h_D$) can vary substantially across classes and domains. Rather
 than combining posteriors via a single global operator (sum/product) for
 every input, CCKR constructs a \emph{routing/cascade policy} that decides
 which expert should dominate for specific classes or regions. Concretely,
-CCKR uses information-based criteria (Expected Information Gain, EIG) and
+CCKR uses information-based criteria (Entropy Imbalance Gain, EIG) and
 impurity reduction (Gini) to select knowledge-anchored decision paths that
 preferentially route samples toward $h_K$ or $h_D$ when that expert is
 expected to be more informative and reliable. This design is intended to
@@ -1106,7 +1110,7 @@ DBSCAN cluster counting ($\epsilon$, $v_{\min}$); Sobel edge detection for white
 
 \textbf{Cardiac Function Assessment} &
 LVEF regression \& heart-failure risk from apical 4-chamber echo video &
-Retrieves Stanford \textbf{EchoNet-Dynamic} dataset paper and associated clinical LVEF reference ranges; fetches ACC/AHA HF guidelines for EF cut-offs ($<$40\%, 40–55\%, $>$55\%) as structured priors &
+Retrieves Stanford \textbf{EchoNet-Dynamic} dataset paper and associated clinical LVEF reference ranges; fetches ACC/AHA heart failure (HF) guidelines for EF cut-offs ($<$40\%, 40–55\%, $>$55\%) as structured priors &
 Encodes: systolic–diastolic phase boundaries, interventricular septum thickness, LV end-systolic/diastolic volume ratio; separates anatomical reasoning (structure) from temporal/hemodynamic reasoning (beat dynamics) to reduce shortcut learning &
 \textbf{EchoNet} U-Net LV segmentation per frame; IVS thickness measurement via OpenCV contour fitting; beat-detection via peak-finding on area-time curve; cycle-aware temporal aggregation $\to$ EF prediction head \\
 
@@ -1406,7 +1410,7 @@ Mixture of Experts (MoE) & 81.90 \\
 
 \paragraph{Ablation I: EIG Design Choice}
 \label{app:eig_baselines}
-We evaluate whether EIG is necessary by keeping the CKI/CCKR pipeline unchanged and only swapping the criterion used to
+We evaluate whether EIG is necessary by keeping the CCKR pipeline unchanged and only swapping the criterion used to
 select knowledge cues / routing splits. All variants use the same backbone, same candidate pool, and same training/eval protocol.
 
 \paragraph{Baselines.}
@@ -1422,7 +1426,7 @@ select knowledge cues / routing splits. All variants use the same backbone, same
 \begin{table}[h]
 \centering
 \small
-\caption{Eig criterion ablation. We keep cki/CCKR fixed and only replace the split/selection criterion.} 
+\caption{EIG criterion ablation. We keep CCKR fixed and only replace the split/selection criterion.} 
 \label{tab:eig_ablation}
 \vspace{12pt} % One line space after the table title
 
@@ -1797,10 +1801,10 @@ oversight.
     \vspace{-2mm}
     \caption{\scriptsize\textbf{Agentic Knowledge-Guided Framework for Medical Image Labeling.} 
 The proposed multi-agent system integrates medical knowledge retrieval, model selection, rule refinement, and code generation. 
-\textbf{Agent 1} CRA searches PubMed and related sources to extract diagnostic rules and biomarkers per imaging modality. 
-\textbf{Agent 2}CDA identifies optimal open-source or (explicitly defined) DL models for labeling tasks. 
-than again agent CRA define rules from expert medical knowledge output by Agent 1 by adapting them to modality constraints and defining thresholds and confidence bounds. 
-\textbf{Agent 3} CGA converts refined rules into executable Python code, validated through an RLHF loop that corrects code errors using human feedback or relevant evaluation metrics. 
+\textbf{Agent 1} (CRA) searches PubMed and related sources to extract diagnostic rules and biomarkers per imaging modality.
+\textbf{Agent 2} (CDA) identifies optimal open-source or (explicitly defined) DL models for labeling tasks.
+CRA then refines rules from the expert medical knowledge extracted by Agent 1, adapting them to modality constraints and defining thresholds and confidence bounds.
+\textbf{Agent 3} (CGA) converts refined rules into executable Python code, validated through an RLHF loop that corrects code errors using human feedback or relevant evaluation metrics. 
 The final stage fuses knowledge-derived rules with DL predictions, enabling interpretable and generalizable medical image classification across modalities.}
 
     \label{fig:medxai_framework}
