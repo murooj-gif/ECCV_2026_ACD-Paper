@@ -5,6 +5,9 @@
 % For camera-ready, swap to: \usepackage[final]{neurips_2026}
 % For arXiv preprint, swap to: \usepackage[preprint]{neurips_2026}
 \usepackage{neurips_2026}
+\setcitestyle{round}  %  puts '()' on year- citation 
+\usepackage{setspace}
+\setstretch{0.94}
 
 
 % Math
@@ -28,10 +31,13 @@
 \usepackage{multirow}
 \usepackage[table]{xcolor}
 
+
+
 % Figures & layout
 \usepackage{graphicx}
 \usepackage{wrapfig}
 \usepackage{float}
+
 
 % Captions - load ONCE with options
 \usepackage[font=footnotesize,labelfont=bf]{caption}
@@ -59,11 +65,10 @@
 \usepackage{wrapfig}    % Required for the wrapfigure environment
 \usepackage{amsmath}    % Recommended for math symbols like P(X|Y)
 \usepackage{caption}    % Useful for better control over figure captions
-\usepackage[font=footnotesize,labelfont=bf]{caption}
 %                      
 \usepackage{tcolorbox}
 \usepackage{colortbl}
-\title{Class-Conditional Knowledge-Guided Learning for Resolving the Generalization--Tail Trade-Off via an Agentic Framework}
+\title{Resolving the Generalization–Long-Tail Trade-Off via Class-Conditional Knowledge-Guided Agentic Learning}
 
 % Anonymous review: leave \author block empty; the style file handles it.
 % For camera-ready (\usepackage[final]{neurips_2026}), fill in:
@@ -76,17 +81,17 @@
 %   Affiliation \\
 %   \texttt{email@institution.edu} \\
 % }
-\linespread{0.90}
+
 \begin{document}
 
 \maketitle
 \begin{abstract}
-Deep learning models deployed in real-world settings must generalize across heterogeneous domains while remaining reliable on rare and underrepresented classes. However, domain generalization and long-tailed recognition are inherently conflicting objectives: domain-invariant learning favors smooth shared representations, whereas rare-class learning requires highly discriminative boundaries. This challenge is particularly critical in clinical applications, where clinically important conditions remain consistently rare across institutions, imaging devices, and patient populations. We propose \textbf{Retrieve--Reason--Run Agents (R3A)}, a knowledge-guided agentic framework that jointly addresses domain shift and long-tailed imbalance through Class-Conditional Knowledge Routing (CCKR). Instead of conventional feature concatenation, CCKR dynamically routes predictions between knowledge-guided and data-driven models using class-conditional decision cascades. R3A employs coordinated agents to retrieve expert knowledge, reason over causal priors, and automatically construct executable learning pipelines.We evaluate R3A across 10 datasets spanning four clinical applications and modalities, including diabetic retinopathy grading, seizure onset zone localization, echocardiographic cardiac-function assessment, and coronary artery disease detection from ECG. Across in-domain, single-domain, and multi-domain generalization settings, R3A consistently improves rare-class recognition and cross-domain robustness, achieving average gains of 14.14\% in-domain, 16.09\% out-of-domain, and 13.1\% rare-class F1 over strong DG and long-tail baselines. In addition, the framework reduces reliance on extensive expert annotations by autonomously constructing clinically informed pipelines.
+Deep learning models deployed in clinical settings face two major challenges: \textbf{Domain Generalization (DG)} and Long-Tailed Visual Recognition (LT-VR). DG requires learning domain-invariant representations that remain robust across heterogeneous acquisition protocols and patient populations. We formally analyze a fundamental trade-off in which gradient alignment objectives optimized in DG methods conflict with the class-aware optimization required for LT-VR, leading to degraded performance on rare classes. To address this, we propose the \textbf{Agentic Framework Reason–Retrieve–Run (R3A)}, a modular architecture that integrates clinical knowledge and expertise autonomously sourced from sonographers, radiologists, and domain specialists as causal intervention signals, orchestrating three agents: the Clinical Reasoning Agent (CRA), the Causal Disentanglement Agent (CDA), and the Code Generation Agent (CGA), thereby decoupling DG and LT optimization objectives. We evaluate R3A on 10 datasets across four clinical applications and multiple imaging modalities under in-domain, single-domain, and multi-domain generalization settings, where it consistently achieves average gains of 13\% in-domain, 13.82\% out-of-domain, and 13.1\% rare-class F1 over strong DG and long-tail baselines.
 \end{abstract}
 \section{Introduction}
 \label{sec:intro}
 
-As observed by Gu \etal~\cite{Gu22}, the inability of deep-learning models to
+As observed by ~\cite{Gu22}, the inability of deep-learning models to
 generalize in real-world settings arises from variability in both the
 categorical distribution $P(Y)$ and the class-conditional distribution
 $P(X|Y)$. In medical image analysis these shifts are particularly severe:
@@ -105,41 +110,119 @@ often critical (tail) pathologies are sparsely represented~\cite{CXR24}.
 Models trained on such data overfit head classes and catastrophically
 misclassify tail diseases.
 
-Although DG and LT-VR have been extensively studied in isolation, they coexist in real-world medical settings. Existing DG methods typically report improvements in macro-level accuracy and cross-domain performance; however, they often fail to preserve performance on rare classes under domain shift, as demonstrated in Table\ref{tab:perclass_f1}. For example, in diabetic retinopathy (DR) grading, which involves five classes where the fourth class (Proliferative DR) is rare, training a Vision Transformer (ViT)-based state-of-the-art empirical risk minimization (ERM) model on the APTOS dataset and evaluating on a different domain, such as MESSIDOR, leads to a drop in overall accuracy. While introducing a DG-enhanced ViT variant \cite{Galappaththige2024} improves in-domain and cross-domain macro performance, the accuracy on the rare class degrades in both settings, despite using the same underlying architecture. Such behavior is unacceptable in high-stakes applications such as autonomous driving, clinical diagnosis, and drone perception, where improvements must be consistent across both frequent and rare classes. (The detailed experimental setup is provided in the appendix 
+Although DG and LT-VR have been extensively studied in isolation, they coexist in real-world medical settings. Existing DG methods typically report improvements in macro-level accuracy and cross-domain performance; however, they often fail to preserve performance on rare classes under domain shift, as demonstrated in Table\ref{tab:perclass_f1}. For example, in diabetic retinopathy (DR) grading, which involves five classes where the fourth class (Proliferative DR) is rare, training a Vision Transformer (ViT)-based state-of-the-art empirical risk minimization (ERM) model on the APTOS dataset ~\cite{APTOS2019} and evaluating on a different domain, such as MESSIDOR~\cite{Abramoff2016Messidor}, leads to a drop in overall accuracy. While introducing a DG-enhanced ViT variant \cite{Galappaththige2024} improves in-domain and cross-domain macro performance, the accuracy on the rare class degrades in both settings, despite using the same underlying architecture. Such behavior is unacceptable in high-stakes applications such as autonomous driving, clinical diagnosis, and drone perception, where improvements must be consistent across both frequent and rare classes. (The detailed experimental setup is provided in the Appendix \ref{table1}.)
 
-\ref{table1}.)
+% \begin{wraptable}{r}{0.575\textwidth}
+% \centering
+% \vspace{-0.1in}
+% \scriptsize
+
+% \setlength{\tabcolsep}{2pt}
+% \renewcommand{\arraystretch}{0.9}
+
+% \caption{%
+%   Comparison of ERM\_ViT,
+%   SPSD\_ViT and Ours on Per-class F1 (\%) of Train on APTOS and test on APTOS
+%   (in-domain held-out test set, $n=733$)
+%   and Messidor (cross-domain, $n=1744$).
+%   clinically critical rare class
+% }
+
+% \label{tab:perclass_f1}
+
+% \resizebox{\linewidth}{!}{%
+% \begin{tabular}{l cc ccc}
+% \toprule
+% \multirow{2}{*}{\textbf{Class}}
+%   & \multicolumn{2}{c}{%
+%     \textbf{APTOS (in-domain)}}
+%   & \multicolumn{3}{c}{%
+%     \textbf{Messidor (cross-domain)}} \\
+% \cmidrule(lr){2-3}
+% \cmidrule(lr){4-6}
+%   & ERM\_ViT
+%   & SPSD\_ViT
+%   & ERM\_ViT
+%   & SPSD\_ViT
+%   & \textbf{Ours} \\
+% \midrule
+% G0 Normal
+%   & $93.9 \pm 0.4$
+%   & $\mathbf{95.0 \pm 0.3}$
+%   & $21.6 \pm 0.8$
+%   & $28.5 \pm 0.6$
+%   & $\mathbf{76.5 \pm 0.5}$ \\
+% G1 Mild
+%   & $47.9 \pm 1.1$
+%   & $\mathbf{54.8 \pm 0.9}$
+%   & $0.0 \pm 0.0$
+%   & $0.0 \pm 0.0$
+%   & $\mathbf{4.8 \pm 0.4}$ \\
+% G2 Moderate
+%   & $67.6 \pm 0.7$
+%   & $\mathbf{70.2 \pm 0.5}$
+%   & $24.7 \pm 0.9$
+%   & $30.3 \pm 0.7$
+%   & $\mathbf{29.1 \pm 0.6}$ \\
+% G3 Severe
+%   & $16.0 \pm 1.2$
+%   & $\mathbf{20.0 \pm 1.0}$
+%   & $1.3 \pm 0.5$
+%   & $5.9 \pm 0.8$
+%   & $\mathbf{29.3 \pm 0.7}$ \\
+% \rowcolor{red!20}
+% \textbf{G4 PDR}
+%   & $\mathbf{11.8 \pm 1.3}$
+%   & $6.6 \pm 1.1$
+%   & $8.6 \pm 1.1$
+%   & $3.3 \pm 0.9$
+%   & $\mathbf{18.5 \pm 0.8}$ \\
+% \midrule
+% \rowcolor{red!20}
+% \textbf{macro-F1}
+%   & $47.4 \pm 0.6$
+%   & $\mathbf{49.3 \pm 0.5}$
+%   & $11.2 \pm 0.4$
+%   & $13.6 \pm 0.3$
+%   & $\mathbf{31.6 \pm 0.4}$ \\
+% \bottomrule
+% \end{tabular}%
+% }
+
+% \vspace{-0.15in}
+% \end{wraptable}
+
+
 \begin{wraptable}{r}{0.575\textwidth}
 \centering
 \vspace{-0.1in}
 \scriptsize
-
 \setlength{\tabcolsep}{2pt}
 \renewcommand{\arraystretch}{0.9}
-
 \caption{%
-  Comparison of ERM\_ViT, ERM\_SPSD and Ours on Per-class F1 (\%) of Train on APTOS and test on APTOS
-  (in-domain held-out test set, $n=733$)
-  and Messidor (cross-domain, $n=1744$).
-  \colorbox{red!20}{\strut~G4 PDR~}~=
-  clinically critical rare class
+  Comparison of
+  ERM-ViT~\citep{dosovitskiy2021},
+  SPSD-ViT~\citep{Su24a},
+  and Ours on Per-class F1 (\%).
+  Trained on APTOS; tested in-domain
+  ($n{=}733$) and cross-domain on
+  Messidor ($n{=}1744$).
+  \textbf{G4 PDR} = clinically
+  critical rare class.
 }
-
 \label{tab:perclass_f1}
-
 \resizebox{\linewidth}{!}{%
 \begin{tabular}{l cc ccc}
 \toprule
 \multirow{2}{*}{\textbf{Class}}
-  & \multicolumn{2}{c}{%
-    \textbf{APTOS (in-domain)}}
-  & \multicolumn{3}{c}{%
-    \textbf{Messidor (cross-domain)}} \\
+  & \multicolumn{2}{c}{\textbf{APTOS (in-domain)}}
+  & \multicolumn{3}{c}{\textbf{Messidor (cross-domain)}} \\
 \cmidrule(lr){2-3}
 \cmidrule(lr){4-6}
-  & ERM\_ViT
-  & ERM\_SPSD
-  & ERM\_ViT
-  & ERM\_SPSD
+  & ERM-ViT
+  & SPSD-ViT
+  & ERM-ViT
+  & SPSD-ViT
   & \textbf{Ours} \\
 \midrule
 G0 Normal
@@ -166,7 +249,6 @@ G3 Severe
   & $1.3 \pm 0.5$
   & $5.9 \pm 0.8$
   & $\mathbf{29.3 \pm 0.7}$ \\
-\rowcolor{red!20}
 \textbf{G4 PDR}
   & $\mathbf{11.8 \pm 1.3}$
   & $6.6 \pm 1.1$
@@ -174,7 +256,6 @@ G3 Severe
   & $3.3 \pm 0.9$
   & $\mathbf{18.5 \pm 0.8}$ \\
 \midrule
-\rowcolor{red!20}
 \textbf{macro-F1}
   & $47.4 \pm 0.6$
   & $\mathbf{49.3 \pm 0.5}$
@@ -184,9 +265,10 @@ G3 Severe
 \bottomrule
 \end{tabular}%
 }
-
 \vspace{-0.15in}
 \end{wraptable}
+
+
 Recent work on \textbf{Multi-Domain Long-Tailed (MDLT) Recognition}~\cite{Yang22} attempts to jointly address DG and LT-VR; however, it assumes that long-tailed distributions exist in some domains but not others, allowing the model to implicitly learn tail classes across multiple domains. This assumption does not hold in real-world scenarios, where rare classes remain consistently rare across all domains. For instance, proliferative diabetic retinopathy and pancreatic cancer remain rare irrespective of the dataset or clinical setting. Within this joint DG and LT-VR setting, a fundamental optimization
 conflict therefore emerges: DG objectives favor \emph{broad, smooth minima}
 that promote domain invariance~\cite{Su24, Su24a}, while LT-VR objectives
@@ -227,19 +309,53 @@ rare-class discrimination than concatenation~\cite{Hohn21_Cancer,
 banerjee2023automated, kamboj2024expert, kamboj2024expertTAI}.
 
 
-\textbf{Contributions.} We formalize and prove that class-conditional
-Class-Conditional Knowledge Routing (CCKR) has a higher likelihood of achieving better
-performance than concatenation in long-tailed domain generalization settings using knowledge-based expert machines.
-Building on this theory we propose the \textbf{Retrieve–Reason–Run Agent
-(R3A)} framework, which builds knowledge-guided deep-learning decision trees
-to jointly resolve domain and long-tail challenges. R3A automatically
-retrieves, structures, and integrates clinically validated knowledge and
-demographic priors from biomedical literature into a causal knowledge base.
-Through an agentic, reinforcement-driven pipeline, R3A iteratively refines
-feature detectors and aligns learned representations with domain-invariant
-causal cues. Experiments on 10 medical-imaging datasets across four
-modalities show that R3A consistently outperforms state-of-the-art DG and
-LT-VR baselines and reduces manual annotation burden.
+% \textbf{Contributions.} We formalize and prove that 
+% Class-Conditional Knowledge Routing (CCKR) has a higher likelihood of achieving better
+% performance than concatenation in long-tailed domain generalization settings using knowledge-based expert machines.
+% Building on this theory we propose the \textbf{Retrieve–Reason–Run Agent
+% (R3A)} framework, which builds knowledge-guided deep-learning decision trees
+% to jointly resolve domain and long-tail challenges. R3A automatically
+% retrieves, structures, and integrates clinically validated knowledge and
+% demographic priors from biomedical literature into a causal knowledge base.
+% Through an agentic, reinforcement-driven pipeline, R3A iteratively refines
+% feature detectors and aligns learned representations with domain-invariant
+% causal cues. Experiments on 10 medical-imaging datasets across four
+% modalities show that R3A consistently outperforms state-of-the-art DG and
+% LT-VR baselines and reduces manual annotation burden.
+
+\textbf{Contributions.} Our main contributions are:
+\begin{itemize}\itemsep2pt \parskip0pt \topsep2pt
+
+  \item \textbf{Theoretical grounding.}
+  We formalize and prove that Knowledge Routing (CCKR)
+  achieves a strictly higher likelihood of joint-distribution
+  agreement in the target domain than feature-knowledge
+  concatenation, and show that it decouples the DG and LT
+  optimization objectives at the gradient level.
+
+  \item \textbf{R3A framework.}
+  We propose the \textbf{Retrieve--Reason--Run Agent (R3A)},
+  a three-agent pipeline (CRA, CDA, CGA) that autonomously
+  retrieves clinically validated knowledge from biomedical
+  literature, encodes it into computable biomarkers, and
+  integrates the result with deep predictors via CCKR --
+  requiring no manual knowledge engineering per task.
+
+  \item \textbf{Automated knowledge integration.}
+  Through a reinforcement-driven refinement loop, R3A
+  generates and validates executable pipelines, retaining
+  only knowledge branches that yield measurable gain over
+  the deep-learning-only baseline -- cutting expert
+  annotation workload by up to 84\% while preserving
+  cross-center generalization.
+
+  \item \textbf{Comprehensive empirical validation.}
+  Across 10 medical-imaging datasets spanning four modalities,
+  R3A consistently outperforms strong DG and LT-VR baselines,
+  with average gains of 13\% in-domain, 13.82\%
+  out-of-domain, and 13.1\% rare-class F1.
+
+\end{itemize}
 
 \section{Related Work}
 \label{sec:relWorks}
@@ -254,7 +370,7 @@ classifier optimization. Newer work uses ensemble and contrastive
 paradigms~\cite{Wang21contrast}, knowledge distillation~\cite{Iscen21}, and
 expert routing~\cite{Wang21routing}. Most assume identical conditional
 distributions across classes and domains, overlooking the interaction between
-imbalance and domain shift common in medical imaging.
+imbalance and domain shift common in medical imaging. 
 
 \textbf{Domain Generalization (DG).}
 DG strategies include conditional invariant representation
@@ -267,12 +383,10 @@ balanced classes, which limits performance under
 \textbf{Multi-Domain and Long-Tailed Recognition (MDLT).}
 Recent work unifies long-tailed recognition and domain generalization under the MDLT paradigm~\cite{Yang22}. Methods such as BoDA~\cite{Yang22}, TALLY~\cite{Yao22}, and FedTAIL~\cite{Su24} primarily address \emph{multi-source} settings, where domain--class priors vary across sources and tail classes in one domain can be partially compensated by head examples from other domains~\cite{CXR24, Shu21}. In contrast, our work considers a more realistic setting in which rare classes remain rare across all domains, i.e., $\mathbb{P}(Y = y_{\text{tail}})$ remains consistently low for all domains $d \in \mathcal{D}$. We further study a domain generalization scenario where training may be restricted to a single source domain, and the tail-class prevalence in the target domain is either stable or distributionally shifted, making cross-domain compensation for rare classes fundamentally infeasible in practice.
 
-\textbf{Relation to classical decision fusion.}
-While classical sum- and product-rule decision fusion schemes have been theoretically analyzed (\eg, Kittler \etal~\cite{kittler1998}), these approaches operate at the level of unconditional posterior aggregation, i.e., $P(y \mid x) \propto \sum_i P_i(y \mid x)$ or $\prod_i P_i(y \mid x)$. In contrast, our formulation specializes fusion into a \emph{class-conditional, knowledge-guided routing/cascade} mechanism, where decisions are conditioned on structured priors and intermediate expert selection. A detailed comparison with ensemble learning and mixture-of-experts formulations is provided in Section~\ref{app:kittler_moe}.
 
 \begin{wrapfigure}{r}{0.35\textwidth} % Narrowed the wrap area
     \centering
-    \vspace{-15pt} 
+    \vspace{-40pt} 
     % Image scaled down to fit the narrower wrapfigure
     \includegraphics[trim=0 0 0 0, clip, width=0.95\linewidth]{problemFormulation.png} 
     
@@ -284,7 +398,7 @@ While classical sum- and product-rule decision fusion schemes have been theoreti
     \label{fig:problemFormulation}
     \vspace{-10pt}
 \end{wrapfigure}
-    \vspace{-14pt}
+    \vspace{-10pt}
 \section{Formalization of DG Solutions}
 \label{sec:formal}
 \subsection{Problem Setting}
@@ -436,7 +550,7 @@ CCKR enables disentanglement of domain generalization and long-tail components o
 CCKR approach has a higher likelihood of achieving higher joint probability distribution
 $P_T(\phi_{\mathcal{Y}}(X),Y)$ than knowledge concatenation $P_T([h(X),K],Y)$ in the target domain
 
-(\emph{proof are in appendices ~\ref{proof}}).
+(\emph{proof are in Appendix ~\ref{proof}}).
 \subsection{Instance of CCKR}
 \label{sec:CCKR_instance}
 \begin{wrapfigure}{R}{0.5\textwidth} % Narrowed to 0.5 for better text wrap
@@ -552,10 +666,7 @@ EIG is favored over traditional information gain because it explicitly measures 
 (Eq.~\eqref{eq:eig_def_B}), prioritizing rare-class uncertainty reduction. The Gini index complements this by providing a stable and interpretable
 impurity measure for deciding whether further cascading is necessary. To justify the design choice, we include ablations that replace EIG with (i) standard information gain (entropy reduction) and (ii) held-out cross-entropy improvement as split criteria, while keeping the CCKR pipeline fixed (Appendix~\ref{app:eig_baselines}).
 
-\paragraph{Sensitivity analysis.}
-We report sensitivity to $\tau_m,\tau_g,d_{th}$ by sweeping one parameter at a time on the validation split:
-$\tau_m\in\{0,0.01,0.02,0.05\}$, $\tau_g\in\{0.05,0.10,0.20,0.30\}$, and $d_{th}\in\{0.50,0.60,0.70,0.80\}$,
-measuring tail-F1/balanced accuracy, average cascade depth, and tie frequency. Hyperparameters are selected on validation only.
+
 \subsection{Knowledge Extraction for Enabling CCKR}
 
 A central challenge in realizing CCKR is extracting expert knowledge to
@@ -594,24 +705,16 @@ hypotheses $h_K(x)$ as illustrated in Figure~\ref{medxai_framework2}.
 A PubMed-based Retrieval-Augmented Generation system extracts diagnostic
 criteria, lesion patterns, imaging biomarkers, and evidence-based decision
 rules. For diabetic retinopathy, knowledge for each of the five DR stages
-maps into a candidate knowledge feature set
-\[
-\mathcal{K} = \{k_1, k_2, \dots, k_n\},
-\]
+maps into a candidate knowledge feature set $\mathcal{K} = \{k_1, k_2, \dots, k_n\},$
 where each $k_i$ corresponds to a measurable attribute such as
 ``hemorrhage present'' or ``gray-matter activation.'' The agent filters
 $\mathcal{K}$ to retain only features that can be reliably computed from
-available data.
-
-\textbf{CRA: Rule Refinement.}
+available data. \textbf{Rule Refinement.}
 Textual diagnostic criteria for the retained features $\mathcal{K}$ are
 converted into executable symbolic rules. This step adapts the knowledge to
 imaging and dataset constraints by defining (1) threshold ranges,
 (2) confidence levels, and (3) failure-case handling for conditions such
-as optic-disc overlap, low contrast, or motion blur. The resulting rule set
-\[
-\mathcal{R} = \{r_1, r_2, \dots, r_m\}
-\]
+as optic-disc overlap, low contrast, or motion blur. The resulting rule set $\mathcal{R} = \{r_1, r_2, \dots, r_m\}$,
 specifies how features in $\mathcal{K}$ should be computed and interpreted.
 $\mathcal{R}$ is finalized based on input quality, robustness of feature
 extraction, and computational resources.
@@ -630,7 +733,7 @@ suitability.
 For each refined rule $r_i \in \mathcal{R}$, the agent synthesizes Python
 programs using OpenCV, PyTorch, and standard detection/segmentation
 libraries (YOLO, SAM, Detectron, U-Net, etc.) to produce a set of
-extraction routines $\mathcal{C} = \{c_1, c_2, \dots, c_p\}$ each computing a subset of $\mathcal{K}$. Automated input checks, unit
+extraction routines $\mathcal{C} = \{c_1, c_2, \dots, c_p\}$, each computing a subset of $\mathcal{K}$. Automated input checks, unit
 tests, and fallback operations are injected. When a program fails, a
 reinforcement-driven refinement loop re-prompts the LLM until correctness
 constraints are met. The agent does not blindly trust LLM-produced rules:
@@ -653,8 +756,7 @@ classifiers $h_K(x)$ from lesion and vessel-morphology rules described in table 
 encodes clinical priors (microaneurysm burden, hemorrhage severity, vessel
 tortuosity); the CGA uses YOLOv11-based detectors and vessel-analysis
 routines to instantiate them; CCKR organizes $h_D(x)$ and $h_K(x)$ into a
-knowledge-guided cascade. \paragraph{Results.}
-Table~\ref{tab:dr_all_results} summarizes three regimes: (1) \textbf{Normal
+knowledge-guided cascade. Table~\ref{tab:dr_all_results} summarizes three regimes: (1) \textbf{Normal
 DG}, train on APTOS and test on external datasets; (2) \textbf{Single-Domain
 Generalization (SDG)}, train on one source and evaluate on unseen targets;
 (3) \textbf{Multi-Domain Generalization (MDG)}, leave-one-domain-out
@@ -676,17 +778,17 @@ Rare stage evaluation (MDG-Rare) focuses on class-specific F1-scores for Stage 3
 Abbreviations: E = EyePACS, M1 = Messidor-1, M2 = Messidor-2.}
 \label{tab:dr_all_results}
 
-\begin{tabular}{ll p{3.2cm} l l c}
+\begin{tabular}{ll p{4.3cm} l l c}
 \toprule
 \textbf{Protocol} & \textbf{Source Domain} & \textbf{Target Domain(s)} & \textbf{Method} & \textbf{Metric} & \textbf{Value (\%)} \\
 \midrule
-\rowcolor[gray]{0.95} \textit{Normal DG} & APTOS & EyePACS, M1, M2 & DL Branch (ViT) & Accuracy & $78.4 \pm 0.4$ \\
-& APTOS & EyePACS, M1, M2 & \textbf{Ours (R3A/CCKR)} & \textbf{Accuracy} & $\mathbf{84.69 \pm 0.3}$ \\
+\rowcolor[gray]{0.95} \textit{Normal DG} & APTOS & E, M1, M2 & DL Branch (ViT) & Accuracy & $78.4 \pm 0.4$ \\
+& APTOS & E, M1, M2 & \textbf{Ours (R3A/CCKR)} & \textbf{Accuracy} & $\mathbf{84.69 \pm 0.3}$ \\
 \midrule
 \multirow{6}{*}{\textit{SDG}} 
-& APTOS & EyePACS, M1, M2 & Ours (R3A Fusion) & Accuracy & $\mathbf{59.9 \pm 0.2}$ \\
-& MESSIDOR-1 & APTOS, EyePACS, M2 & Ours (R3A Fusion) & Accuracy & $\mathbf{67.1 \pm 0.4}$ \\
-& MESSIDOR-2 & APTOS, EyePACS, M1 & Ours (R3A Fusion) & Accuracy & $\mathbf{65.5 \pm 0.3}$ \\
+& APTOS & E, M1, M2 & Ours (R3A Fusion) & Accuracy & $\mathbf{59.9 \pm 0.2}$ \\
+& MESSIDOR-1 & APTOS, E, M2 & Ours (R3A Fusion) & Accuracy & $\mathbf{67.1 \pm 0.4}$ \\
+& MESSIDOR-2 & APTOS, E, M1 & Ours (R3A Fusion) & Accuracy & $\mathbf{65.5 \pm 0.3}$ \\
 & EyePACS & APTOS, M1, M2 & Ours (R3A Fusion) & Accuracy & $61.7 \pm 0.4$ \\
 & EyePACS & APTOS, M1, M2 & Best DG (SPSD-ViT) & \textbf{Accuracy} & $\mathbf{62.5 \pm 0.2}$ \\
 \midrule
@@ -704,29 +806,29 @@ Abbreviations: E = EyePACS, M1 = Messidor-1, M2 = Messidor-2.}
 \bottomrule
 \end{tabular}
 \end{table*}
-
 \begin{table*}[h]
 \centering
-\footnotesize
-\setlength{\tabcolsep}{4pt} % Slightly increased padding for readability
 \scriptsize
+\setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.05}
-\caption{Comparison of R3A with task-specific baselines across modalities. Rare classes denote clinically critical underrepresented conditions.
+\caption{Comparison of R3A with task-specific baselines across modalities. Rare classes denote clinically critical underrepresented conditions. 
 Abbreviations: SOZ = seizure onset zone; rs-fMRI = resting-state fMRI; EF = ejection fraction.}
 \label{table3}
+
 \begin{tabular}{
-p{2.2cm} % Task
-p{2.6cm} % Modality (Increased from 1.5cm)
-p{2.6cm} % Dataset (Increased from 2.5cm)
-c        % R3A
-p{1.8cm} % Baseline
-c        % Base
-c        % Gain
-p{1.8cm} % Rare Class (Slightly reduced to balance total width)
+p{2.2cm}
+p{1.5cm}
+p{2.5cm}
+c
+p{1.8cm}
+c
+c
+p{1.8cm}
 }
 \toprule
 \textbf{Task} & \textbf{Modality} & \textbf{Dataset} & \textbf{R3A} & \textbf{Baseline} & \textbf{Base} & \textbf{Gain} & \textbf{Rare Class} \\
 \midrule
+
 \rowcolor[gray]{0.95}
 SOZ Localization
 & MRI Images
@@ -734,18 +836,20 @@ SOZ Localization
 & \textbf{84.6}
 & CuPKL~\cite{kamboj2024expertTAI}
 & 46.1
-& $\uparrow$ 38.5
+& $\uparrow$ 38.5\%
 & SOZ-positive
 \\
+
 Diabetic Retinopathy Grading
 & Fundus Images
 & APTOS 2019~\cite{kauppi2019}
 & \textbf{84.69}
 & SPSD-ViT~\cite{Galappaththige2024}
 & 78.4
-& $\uparrow$ 6.29
+& $\uparrow$ 6.29\%
 & Proliferative DR
 \\
+
 \rowcolor[gray]{0.95}
 CAD Detection (Stress ECG)
 & Stress electrocardiogram (ECG)
@@ -753,63 +857,35 @@ CAD Detection (Stress ECG)
 & \textbf{92.3}
 & Transformer-based model~\cite{Banerjee2025StressECG}
 & 82.0
-& $\uparrow$ 10.3
-& Severe CAD\\
+& $\uparrow$ 10.3\%
+& Severe CAD
+\\
+
 Cardiac Function Assessment
 & Echocardiogram Videos
 & EchoNet-Dynamic~\cite{EchoNetDynamic,StanfordEchoNet}
 & 94.0
 & R3D CNN~\cite{EchoNetDynamic}
 & \textbf{97.0}
-& $\downarrow$ 3.0
+& $\downarrow$ 3.0\%
 & EF $<30\%$, 30--40\%
 \\
-\rowcolor[gray]{0.95}
-Average Gain In-domain
-&  
-&  
-& \textbf{92.3}
-&  
-& 82.0
-& $\uparrow$ 10.3
- 
-\bottomrule
-\end{tabular}
-\end{table*}
-
-
-\begin{table*}[h]
-\centering
-\scriptsize
-\setlength{\tabcolsep}{4pt}
-\renewcommand{\arraystretch}{1.25}
-\caption{\footnotesize \textbf{Cross-Application Performance and Generalization Gains.} 
-Summary of performance improvements using our R3A framework across four medical domains. 
-ID (In-Domain) Gain represents improvement over the baseline on the training distribution. 
-OOD (Out-of-Domain) Gain represents improvement over baseline on unseen target domains (Cross-Center/Cross-Dataset).
-Metric abbreviations: MAE = mean absolute error; AUC = area under the curve.
-Institution abbreviations: PCH = Phoenix Children's Hospital; UNC = University of North Carolina.}
-\label{tab:cross_app_summary}
-
-\begin{tabular}{lp{2.5cm}p{2.5cm}cccc}
 \toprule
-\textbf{Application} & \textbf{Source Domain} & \textbf{Target Domain} & \textbf{Baseline} & \textbf{ID Gain} & \textbf{OOD Gain} & \textbf{F1 OOD Gain} \\
-\midrule
-
-\textit{DR Grading} & APTOS / Messidor1/Messidor2 & EyePACS  & 78.4\% & $+6.90\%$ & $+4.52\%$ & $+14.8\%$ \\
-
-\textit{SOZ Localization} & PCH (rs-fMRI) & UNC (rs-fMRI) & 46.1\% & $+8.50\%$ & $+7.65\%$ & $+18.9\%$ \\
-
-\textit{Cardiac Function} & EchoNet (Train) & EchoNet (Val) & 4.10 (MAE) & $-0.30\%$ & -- & $+6.2\%$ \\
-
-\textit{CAD Detection} & MISC Center 1  (Train) & MISC Center 2 (Test) & 82.0 (AUC) & $+11.20\%$ & -- & $+12.7\%$ \\
-
-\midrule
 \rowcolor[gray]{0.95}
-\textbf{Average Improvement} & -- & -- & -- & \textbf{+6.57\%} & \textbf{+6.09\%} & \textbf{+13.15\%} \\
+Average Gain
+& 
+& 
+& 
+& 
+& 
+& $\uparrow$ \textbf{13\%}
+& 
+\\
+
 \bottomrule
 \end{tabular}
 \end{table*}
+
 \subsection{Application 2: Seizure Onset Zone Localization}
 
 \paragraph{Setup.}
@@ -866,7 +942,7 @@ in the form of \textbf{lead-selection masks} and \textbf{MET-level
 encoding}, reflecting clinicians' understanding of ischemic-signal
 relevance and guiding transformer attention toward clinically meaningful
 ECG regions. All models were trained on 726 subjects and tested on 227
-unseen cases under the same split as prior work, yielding an average 10\%
+unseen cases under the same split as prior work, resulting 10\%
 gain over baselines as shown in the table \ref{tab:cad_results}.
 
 
@@ -893,7 +969,9 @@ into computable biomarkers and causal factors, and (iii) validates the
 resulting pipelines before integration with deep predictors. Across four
 clinical applications and ten datasets, R3A consistently improves
 cross-domain and rare-class recognition while reducing manual annotation
-burden as shown in Table~\ref{table3}. 
+burden as shown in Table~\ref{tab:cross_app_summary}. While R3A is validated in high-stakes clinical settings, the framework extends
+naturally to any long-tailed, safety-critical domain, such as autonomous driving
+and aerospace anomaly detection. Future work will pursue these directions.directions.
 
 %                      
 % Bibliography. NeurIPS 2026 loads natbib by default.
@@ -915,6 +993,7 @@ burden as shown in Table~\ref{table3}.
 
 \appendix
 \section{Appendix}
+\vspace{-22 pt}
 \noindent\textbf{Theorem 1 Proof}
 \label{proof}
 At each depth of the CCKR sequence we either use a data-driven machine or a knowledge-guided machine.
@@ -1063,7 +1142,7 @@ best interpreted as an \emph{expert-routing tree/cascade} rather than a
 conventional feature-only decision tree as shown in figure \ref{fig3}.   
 \section{Application Details}
 \label{app:applications}
-\paragraph{Task-Wise Agent Action Decomposition Across Clinical Domains:} Table~\ref{tab:R3A_agent_grounding_summary} summarizes how \textit{R3A} integrates retrieval, reasoning, and execution across diverse clinical domains by grounding predictions in domain-specific medical knowledge. Each application encodes structured priors and task-relevant constraints, enabling robust handling of class imbalance, rare cases, and modality-specific variability. This unified agentic design ensures consistent knowledge-guided inference while adapting to heterogeneous data sources and clinical objectives.
+\paragraph{Task-Wise Agent Action Decomposition Across Clinical Domains:} Table~\ref{tab:R3A_agent_grounding_summary} summarizes how \textit{R3A} integrates retrieval, reasoning, and execution across diverse clinical domains by grounding predictions in domain-specific medical knowledge. Each application encodes structured priors and task-relevant constraints, enabling robust handling of class imbalance, rare cases, and modality-specific variability.  
 \begin{table*}[h]
 \centering
 \scriptsize
@@ -1174,6 +1253,32 @@ reductions in human-intervention workload. While a formal measurement is
 deferred to future work, the improvement in external MAE indicates
 enhanced domain generalization, and beat-level aggregation reduces
 required human-review effort by an estimated $\sim$70\%.
+\begin{table}[h]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.25}
+\caption{\footnotesize \textbf{Cross-Application Performance and Generalization Gains.}
+Summary of performance improvements using our R3A framework across four medical domains.
+OOD (Out-of-Domain) Gain represents improvement over baseline on unseen target domains (Cross-Center/Cross-Dataset).
+Metric abbreviations: MAE = mean absolute error; AUC = area under the curve.
+Institution abbreviations: PCH = Phoenix Children's Hospital; UNC = University of North Carolina;
+MISC = Mayo Integrated Stress Center.}
+\label{tab:cross_app_summary}
+\begin{tabular}{lp{2.8cm}p{3.3cm}ccc}
+\toprule
+\textbf{Application} & \textbf{Source Domain} & \textbf{Target Domain} & \textbf{Baseline} & \textbf{OOD Gain} & \textbf{F1 OOD Gain} \\
+\midrule
+\textit{DR Grading}        & APTOS                 & EyePACS, Messidor-1, Messidor-2 & 54.4\% (AUC)   & $+6.30\%$  & $+14.8\%$ \\
+\textit{SOZ Localization}  & PCH (rs-fMRI)         & UNC (rs-fMRI)                   & 55.34\% (AUC)  & $+32.16\%$ & $+18.9\%$ \\
+\textit{Cardiac Function}  & EchoNet-Dynamic       & Mayo Echocardiogram             & 91.2\% (AUC)     & $+3.00\%$  & $+6.2\%$  \\
+\textit{CAD Detection}     & MISC Center 1 (Train) & MISC Center 2 (Test)            & 82.0 (AUC)     & --         & $+12.7\%$ \\
+\midrule
+\rowcolor[gray]{0.95}
+\textbf{Average Improvement} & -- & -- & -- & $+13.82\%$ & $+13.15\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
 % ===== Row 1: SOZ + Cardiac side by side =====
 \begin{figure}[h]
 \centering
@@ -1249,6 +1354,7 @@ value (NPV) and are under the curve (AUC).}
 \end{tabular}
 \end{table}
 
+\newpage
 \subsection{Experimental Setup of Clinical Motivation Table ~\ref{tab:perclass_f1}}
 \label{table1}
 \paragraph{Why rare-class recognition is high-stakes.}
@@ -1261,7 +1367,6 @@ A natural concern in method comparison is whether performance gains arise from a
 Table~\ref{tab:perclass_f1} reports per-class F1 scores on the Messidor cross-domain split ($n=1744$), revealing a consistent and clinically meaningful trend. Both ERM\_ViT and ERM\_SPSDViT exhibit near-zero performance on minority grades: ERM\_ViT achieves 0.0 on G1 (Mild) and only 1.3 on G3 (Severe), while ERM\_SPSDViT improves slightly on G3 (5.9) but regresses on G4 (PDR) from 8.6 to 3.3. This behavior reflects a fundamental trade-off in Eq.~\eqref{eq:classrisk}: stronger domain-invariance regularization compresses the feature space, disproportionately collapsing rare-class manifolds with small $n_c$.
 
 The macro-F1 gap between ERM\_ViT (11.2) and ERM\_SPSDViT (13.6) is marginal, indicating that standard DG objectives provide limited benefit under cross-domain long-tailed shifts. In contrast, our method increases macro-F1 to 31.6, a +18.0 improvement over ERM\_SPSDViT. Importantly, gains are not uniform across classes: G0 (Normal) improves from 28.5 to 76.5, providing a strong triage anchor; G3 (Severe) improves from 5.9 to 29.3; and G4 (PDR) improves from 3.3 to 18.5, which is particularly critical given its clinical severity (Section~\ref{sec:intro}). G1 (Mild) remains the most challenging class (4.8), consistent with its subtle visual presentation and low inter-grader agreement. APTOS per-class results are reported in the final version.
-\newpage
 \newpage
 \section{Ablation Studies}
 
@@ -1434,6 +1539,10 @@ Standard IG measures class-label uncertainty reduction, while CE-Gain directly o
 predictor. EIG differs in that it estimates the expected utility of a knowledge cue under the routing policy and is thus
 better aligned with selective expert usage; the ablation quantifies whether this alignment translates into improved
 target-domain tail robustness and/or more efficient routing as shown in table \ref{tab:eig_ablation} (lower KL coverage for the same accuracy).
+\paragraph{Sensitivity analysis.}
+We report sensitivity to $\tau_m,\tau_g,d_{th}$ by sweeping one parameter at a time on the validation split:
+$\tau_m\in\{0,0.01,0.02,0.05\}$, $\tau_g\in\{0.05,0.10,0.20,0.30\}$, and $d_{th}\in\{0.50,0.60,0.70,0.80\}$,
+measuring tail-F1/balanced accuracy, average cascade depth, and tie frequency. Hyperparameters are selected on validation only.
 \newpage
 
 \newpage
@@ -1794,5 +1903,7 @@ The final stage fuses knowledge-derived rules with DL predictions, enabling inte
 
     \label{fig:medxai_framework}
 \end{figure*}
+\newpage
+\input{checklist.tex}
 
 \end{document}
